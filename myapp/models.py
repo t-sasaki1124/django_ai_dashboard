@@ -12,6 +12,8 @@ class YouTubeComment(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name = "YouTube Comment"
+        verbose_name_plural = "YouTube Comments"
 
     def __str__(self):
         return f"{self.author}: {self.comment_text[:40]}..."
