@@ -11,13 +11,16 @@ class YouTubeCommentAdmin(admin.ModelAdmin):
     search_fields = ('author', 'comment_text')
     change_list_template = "admin/myapp/youtubecomment/change_list.html"
 
+    # ✅ URLルーティング追加
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
             path('import-csv/', self.import_csv, name='import_csv'),
+            path('delete-all/', self.delete_all, name='delete_all_youtube_comments'),  # ← ここ追加！
         ]
         return custom_urls + urls
 
+    # ✅ CSVインポート機能
     def import_csv(self, request):
         if request.method == "POST" and request.FILES.get("csv_file"):
             csv_file = TextIOWrapper(request.FILES["csv_file"].file, encoding="utf-8")
@@ -42,4 +45,11 @@ class YouTubeCommentAdmin(admin.ModelAdmin):
             return redirect("..")
 
         messages.error(request, "CSVファイルを選択してください。")
+        return redirect("..")
+
+    # ✅ 全件削除機能（CSVと同じレベルに定義）
+    def delete_all(self, request):
+        count = YouTubeComment.objects.count()
+        YouTubeComment.objects.all().delete()
+        messages.success(request, f"🗑 {count} 件のコメントを削除しました。")
         return redirect("..")

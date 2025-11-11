@@ -31,6 +31,15 @@
   </form>
 </div>
 
+<form action="./delete-all/" method="post" style="margin-top:10px;">
+    {% csrf_token %}
+    <button type="submit" class="button" style="background-color:#f44336; color:white;">
+      🗑 Delete All Comments
+    </button>
+</form>
+  
+
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   const csvBtn = document.getElementById("toggleCsvForm");
