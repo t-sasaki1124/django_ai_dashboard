@@ -16,7 +16,7 @@ class YouTubeCommentAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         custom_urls = [
             path('import-csv/', self.import_csv, name='import_csv'),
-            path('delete-all/', self.delete_all, name='delete_all_youtube_comments'),  # ← ここ追加！
+            path('delete-all/', self.delete_all, name='delete_all_youtube_comments'), 
         ]
         return custom_urls + urls
 
