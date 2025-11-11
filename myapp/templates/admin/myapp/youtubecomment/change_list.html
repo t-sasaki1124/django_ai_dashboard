@@ -3,12 +3,50 @@
 {% block object-tools %}
 {{ block.super }}
 
-<div style="margin-top: 10px; display: flex; gap: 10px;">
-  <button type="button" class="button" style="background-color:#4CAF50; color:white;">
+<div style="margin-top: 10px;">
+  <button id="toggleCsvForm" type="button" class="button" style="background-color:#4CAF50; color:white;">
     Import CSV
   </button>
-  <button type="button" class="button" style="background-color:#2196F3; color:white;">
+  <button id="toggleJsonForm" type="button" class="button" style="background-color:#2196F3; color:white;">
     Import JSON
   </button>
+
+  <!-- CSV upload form -->
+  <form id="csvUploadForm" method="post" enctype="multipart/form-data"
+        action="import-csv/" style="display:none; margin-top:10px;">
+    {% csrf_token %}
+    <input type="file" name="csv_file" accept=".csv" required>
+    <button type="submit" class="button" style="background-color:#4CAF50; color:white;">
+      Upload CSV
+    </button>
+  </form>
+
+  <!-- JSON upload form -->
+  <form id="jsonUploadForm" method="post" enctype="multipart/form-data" style="display:none; margin-top:10px;">
+    {% csrf_token %}
+    <input type="file" name="json_file" accept=".json" required>
+    <button type="submit" class="button" style="background-color:#2196F3; color:white;">
+      Upload JSON
+    </button>
+  </form>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const csvBtn = document.getElementById("toggleCsvForm");
+  const jsonBtn = document.getElementById("toggleJsonForm");
+  const csvForm = document.getElementById("csvUploadForm");
+  const jsonForm = document.getElementById("jsonUploadForm");
+
+  csvBtn.addEventListener("click", function() {
+    csvForm.style.display = csvForm.style.display === "none" ? "block" : "none";
+    jsonForm.style.display = "none";
+  });
+
+  jsonBtn.addEventListener("click", function() {
+    jsonForm.style.display = jsonForm.style.display === "none" ? "block" : "none";
+    csvForm.style.display = "none";
+  });
+});
+</script>
 {% endblock %}
