@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Comment Analysis Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body { background-color: #f5f5f5; }
+    </style>
+  </head>
+  <body class="text-gray-900">
+    <div class="max-w-6xl mx-auto py-10 px-6">
+      <header class="mb-8 text-center">
+        <h1 class="text-3xl font-bold mb-2">AI Comment Analysis Dashboard</h1>
+        <a href="/admin/" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+          Go to Admin
+        </a>
+      </header>
+
+      {% if graphic %}
+      <div class="flex justify-center mb-10">
+        <img src="data:image/png;base64,{{ graphic }}" alt="Chart" class="rounded-xl border border-gray-200 shadow" />
+      </div>
+      {% endif %}
+
+      <section class="bg-white shadow rounded-2xl p-6">
+        <h2 class="text-xl font-semibold mb-4">Comment Data</h2>
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Author</th>
+              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Comment</th>
+              <th class="px-4 py-2 text-right text-sm font-semibold text-gray-700">Likes</th>
+              <th class="px-4 py-2 text-right text-sm font-semibold text-gray-700">Replies</th>
+              <th class="px-4 py-2 text-right text-sm font-semibold text-gray-700">Created</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for c in comments %}
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-4 py-2 text-sm font-medium text-gray-800">{{ c.author }}</td>
+              <td class="px-4 py-2 text-sm text-gray-700">{{ c.comment_text|truncatechars:80 }}</td>
+              <td class="px-4 py-2 text-sm text-right text-gray-700">{{ c.like_count }}</td>
+              <td class="px-4 py-2 text-sm text-right text-gray-700">{{ c.reply_count }}</td>
+              <td class="px-4 py-2 text-sm text-right text-gray-500">{{ c.created_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </body>
+</html>
