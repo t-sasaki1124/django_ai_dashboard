@@ -11,12 +11,21 @@
   </head>
   <body class="text-gray-900">
     <div class="max-w-6xl mx-auto py-10 px-6">
-      <header class="mb-8 text-center">
-        <h1 class="text-3xl font-bold mb-2">AI Comment Analysis Dashboard</h1>
-        <a href="/admin/" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-          Go to Admin
-        </a>
-      </header>
+        <header class="mb-8 relative">
+            <!-- Go to Admin ボタンを右上に配置 -->
+            <div class="absolute top-0 right-0">
+              <a href="/admin/"
+                 class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
+                Go to Admin
+              </a>
+            </div>
+          
+            <!-- タイトル中央配置 -->
+            <h1 class="text-3xl font-bold text-center mt-4">
+              AI Comment Analysis Dashboard
+            </h1>
+          </header>
+          
 
       {% if graphic %}
       <div class="flex justify-center mb-10">
