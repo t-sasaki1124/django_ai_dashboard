@@ -1,33 +1,174 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div style="padding: 40px; text-align: center;">
-    <h1>Pricing Plans</h1>
-    <p>あなたの用途に合わせて最適なプランを選択できます。</p>
+{% block title %}Pricing Plans{% endblock %}
 
-    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 40px;">
+{% block content %}
+
+<style>
+/* --- 全体レイアウト --- */
+.pricing-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: center;
+    padding-top: 20px;
+}
+
+/* --- 見出し --- */
+.pricing-title {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.pricing-subtitle {
+    font-size: 18px;
+    color: #555;
+}
+
+/* --- カード配置 --- */
+.pricing-cards {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+/* --- 各プランカード --- */
+.pricing-card {
+    width: 280px;
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    transition: 0.3s ease;
+    position: relative;
+}
+
+.pricing-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 35px rgba(0,0,0,0.16);
+}
+
+/* ベストセラータグ */
+.card-badge {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    background: #2d8cff;
+    color: white;
+    padding: 7px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* --- プラン名 --- */
+.plan-name {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+/* --- 料金表示 --- */
+.plan-price {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.plan-price span {
+    font-size: 16px;
+    color: #777;
+}
+
+/* --- 特典リスト --- */
+.plan-features {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+    margin: 20px 0;
+}
+
+.plan-features li {
+    margin-bottom: 10px;
+    padding-left: 20px;
+    position: relative;
+    font-size: 14px;
+}
+
+.plan-features li:before {
+    content: "✔";
+    color: #2ecc71;
+    position: absolute;
+    left: 0;
+}
+
+/* --- ボタン --- */
+.plan-button {
+    display: block;
+    padding: 12px 0;
+    background: #3498db;
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    border-radius: 10px;
+    transition: 0.2s ease;
+}
+
+.plan-button:hover {
+    background: #2675b9;
+}
+</style>
+
+<div class="pricing-container">
+
+    <h1 class="pricing-title">Pricing Plans</h1>
+    <p class="pricing-subtitle">用途に合わせて最適なプランをお選びいただけます。</p>
+
+    <div class="pricing-cards">
 
         <!-- Free Plan -->
-        <div style="border: 1px solid #ccc; padding: 20px; width: 250px; border-radius: 10px;">
-            <h2>Free</h2>
-            <p>基本的なコメント閲覧・CSV取り込みが可能。</p>
-            <strong style="font-size: 24px;">¥0</strong>
+        <div class="pricing-card">
+            <div class="plan-name">Free</div>
+            <div class="plan-price">¥0 <span>/ 月</span></div>
+            <ul class="plan-features">
+                <li>YouTubeコメント CSV アップロード</li>
+                <li>データの手動分析</li>
+                <li>Django管理画面フルアクセス</li>
+            </ul>
+            <a class="plan-button" href="#">現在のプラン</a>
         </div>
 
         <!-- Pro Plan -->
-        <div style="border: 2px solid #4CAF50; padding: 20px; width: 250px; border-radius: 10px;">
-            <h2>Pro</h2>
-            <p>AI分析、感情分析、Embedding検索を利用可能。</p>
-            <strong style="font-size: 24px;">¥980/月</strong>
+        <div class="pricing-card">
+            <div class="card-badge">人気</div>
+            <div class="plan-name">Pro</div>
+            <div class="plan-price">¥980 <span>/ 月</span></div>
+            <ul class="plan-features">
+                <li>コメントの自動収集（API）</li>
+                <li>AI返信テンプレート生成</li>
+                <li>週次分析レポート自動生成</li>
+                <li>クラスタリング・可視化</li>
+            </ul>
+            <a class="plan-button" href="#">今すぐアップグレード</a>
         </div>
 
-        <!-- Enterprise -->
-        <div style="border: 1px solid #000; padding: 20px; width: 250px; border-radius: 10px;">
-            <h2>Enterprise</h2>
-            <p>高度なAIモデル、チーム管理、拡張データ容量。</p>
-            <strong style="font-size: 24px;">お問い合わせ</strong>
+        <!-- Enterprise Plan -->
+        <div class="pricing-card">
+            <div class="plan-name">Enterprise</div>
+            <div class="plan-price">¥9,800 <span>/ 月</span></div>
+            <ul class="plan-features">
+                <li>高度なAI分析（Embedding, pgvector）</li>
+                <li>オリジナルAIモデル学習</li>
+                <li>データベース自動バックアップ</li>
+                <li>専用サポート（Slack）</li>
+            </ul>
+            <a class="plan-button" href="#">問い合わせる</a>
         </div>
 
     </div>
+
 </div>
+
 {% endblock %}
