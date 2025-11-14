@@ -23,3 +23,6 @@ def index(request):
         buffer.close()
 
     return render(request, 'index.html', {'graphic': graphic, 'comments': comments})
+
+def pricing(request):
+    return render(request, "pricing.html")

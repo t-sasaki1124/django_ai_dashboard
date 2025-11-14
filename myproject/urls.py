@@ -10,3 +10,10 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico')),
 ]
+
+
+urlpatterns = [
+    path('', views.index, name='home'),
+    path('pricing/', views.pricing, name='pricing'),
+    path('admin/', admin.site.urls),
+]
