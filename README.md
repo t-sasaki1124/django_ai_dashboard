@@ -61,6 +61,7 @@ python manage.py createsuperuser
 
 ## 🖥 4. サーバーを起動
 ```bash
+venv\Scripts\activate
 python manage.py runserver
 ```
 
@@ -106,12 +107,15 @@ id,video_id,comment_id,comment_text,author,like_count,reply_count,reply_depth_po
 django_ai_dashboard/
 ├─ myproject/
 │  ├─ settings.py
-│  ├─ urls.py
+│  ├─ urls.py(プロジェクト全体のURL)
 │  └─ ...
 ├─ myapp/
 │  ├─ admin.py
 │  ├─ models.py
 │  ├─ templates/
+│  │   ├─ index.html
+│  │   ├─ base.html
+│  │   ├─ pricing.html
 │  │   └─ admin/myapp/youtubecomment/change_list.html
 │  ├─ static/
 │  └─ ...
