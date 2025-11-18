@@ -31,7 +31,8 @@
     justify-content: center;
     gap: 20px;
     margin-top: 40px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* 3 枚を横並びに固定 */
+    overflow-x: auto;  /* 画面が狭い場合は横スクロール */
 }
 
 /* --- 各プランカード --- */
@@ -43,6 +44,8 @@
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     transition: 0.3s ease;
     position: relative;
+    display: flex;              /* 中身を縦方向に並べる */
+    flex-direction: column;
 }
 
 .pricing-card:hover {
@@ -114,10 +117,21 @@
     font-size: 16px;
     border-radius: 10px;
     transition: 0.2s ease;
+    text-align: center;
+    margin-top: auto;  /* ボタンをカード下部に寄せて高さを揃える */
 }
 
 .plan-button:hover {
     background: #2675b9;
+}
+
+/* 現在のプランボタン用の色 */
+.plan-button-current {
+    background: #10b981;        /* グリーン系 */
+}
+
+.plan-button-current:hover {
+    background: #059669;
 }
 </style>
 
@@ -137,12 +151,11 @@
                 <li>データの手動分析</li>
                 <li>Django管理画面フルアクセス</li>
             </ul>
-            <a class="plan-button" href="#">現在のプラン</a>
+            <a class="plan-button plan-button-current" href="#">現在のプラン</a>
         </div>
 
         <!-- Pro Plan -->
         <div class="pricing-card">
-            <div class="card-badge">人気</div>
             <div class="plan-name">Pro</div>
             <div class="plan-price">¥980 <span>/ 月</span></div>
             <ul class="plan-features">
