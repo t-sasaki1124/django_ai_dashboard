@@ -9,6 +9,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
     path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico')),
+    path("", include("myapp.urls")),
 ]
 
 
