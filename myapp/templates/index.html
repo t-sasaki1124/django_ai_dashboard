@@ -1,66 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Comment Analysis Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      body { background-color: #f5f5f5; }
-    </style>
-  </head>
-  <body class="text-gray-900">
-    <div class="max-w-6xl mx-auto py-10 px-6">
-        <header class="mb-8 relative">
-            <!-- Go to Admin ボタンを右上に配置 -->
-            <div class="absolute top-0 right-0 flex gap-3">
-              <a href="/pricing/" style="padding:10px 20px; background:#4CAF50; color:white; border-radius:5px;">
-                Pricing Plans
-              </a>
-              <a href="/admin/"
-                 class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
-                Go to Admin
-              </a>
-            </div>
-          
-            <!-- タイトル中央配置 -->
-            <h1 class="text-3xl font-bold text-center mt-4">
-              AI Comment Analysis Dashboard
-            </h1>
-          </header>
-          
+{% extends "base.html" %}
 
-      {% if graphic_3d %}
-      <div class="flex justify-center mb-10">
-        <img src="data:image/png;base64,{{ graphic_3d }}" alt="Chart" class="rounded-xl border border-gray-200 shadow" />
-      </div>
-      {% endif %}
+{% block title %}AI Comment Analysis Dashboard{% endblock %}
 
-      <section class="bg-white shadow rounded-2xl p-6">
-        <h2 class="text-xl font-semibold mb-4">Comment Data</h2>
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-100">
-            <tr>
-              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Author</th>
-              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Comment</th>
-              <th class="px-4 py-2 text-right text-sm font-semibold text-gray-700">Likes</th>
-              <th class="px-4 py-2 text-right text-sm font-semibold text-gray-700">Replies</th>
-              <th class="px-4 py-2 text-right text-sm font-semibold text-gray-700">Created</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            {% for c in comments %}
-            <tr class="hover:bg-gray-50 transition">
-              <td class="px-4 py-2 text-sm font-medium text-gray-800">{{ c.author }}</td>
-              <td class="px-4 py-2 text-sm text-gray-700">{{ c.comment_text|truncatechars:80 }}</td>
-              <td class="px-4 py-2 text-sm text-right text-gray-700">{{ c.like_count }}</td>
-              <td class="px-4 py-2 text-sm text-right text-gray-700">{{ c.reply_count }}</td>
-              <td class="px-4 py-2 text-sm text-right text-gray-500">{{ c.created_at|date:"Y-m-d H:i" }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </section>
-    </div>
-  </body>
-</html>
+{% block content %}
+
+<div class="max-w-6xl mx-auto py-8 px-4">
+
+  <!-- ヘッダーセクション（Pricing Plans ボタンのみ） -->
+  <header class="mb-10 text-center">
+    <h1 class="text-3xl font-bold mb-3 text-gray-900">
+      AI Comment Analysis Dashboard
+    </h1>
+    <p class="text-sm text-gray-500 mb-6">
+      YouTube コメントのエンゲージメントを 3D で可視化し、一覧で確認できます。
+    </p>
+  </header>
+
+  {% if graphic_3d %}
+  <div class="flex justify-center mb-10">
+    <img src="data:image/png;base64,{{ graphic_3d }}" alt="Chart" class="rounded-xl border border-gray-200 shadow" />
+  </div>
+  {% endif %}
+
+  <section class="bg-white shadow rounded-2xl p-6">
+    <h2 class="text-xl font-semibold mb-4">Comment Data</h2>
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Author</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Comment</th>
+          <th class="px-4 py-2 text-right text-sm font-semibold text-gray-700">Likes</th>
+          <th class="px-4 py-2 text-right text-sm font-semibold text-gray-700">Replies</th>
+          <th class="px-4 py-2 text-right text-sm font-semibold text-gray-700">Created</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for c in comments %}
+        <tr class="hover:bg-gray-50 transition">
+          <td class="px-4 py-2 text-sm font-medium text-gray-800">{{ c.author }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ c.comment_text|truncatechars:80 }}</td>
+          <td class="px-4 py-2 text-sm text-right text-gray-700">{{ c.like_count }}</td>
+          <td class="px-4 py-2 text-sm text-right text-gray-700">{{ c.reply_count }}</td>
+          <td class="px-4 py-2 text-sm text-right text-gray-500">{{ c.created_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+{% endblock %}
