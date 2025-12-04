@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import YouTubeComment
+from .models import YouTubeComment, Plan, UserPlan
 
 import matplotlib
 matplotlib.use("Agg")
@@ -59,6 +59,24 @@ def index(request):
 
 
 def pricing(request):
-    return render(request, "pricing.html")
+    # 現在のユーザーのプラン情報を取得
+    current_plan = None
+    current_user_plan = None
+    if request.user.is_authenticated:
+        try:
+            current_user_plan = UserPlan.objects.get(user=request.user, is_active=True)
+            current_plan = current_user_plan.plan
+        except UserPlan.DoesNotExist:
+            pass
+    
+    # すべてのプランを取得
+    plans = Plan.objects.all().order_by('price')
+    
+    return render(request, "pricing.html", {
+        "current_plan": current_plan,
+        "current_user_plan": current_user_plan,
+        "plans": plans,
+        "user": request.user,  # テンプレートでユーザーIDを使用するため
+    })
 
 

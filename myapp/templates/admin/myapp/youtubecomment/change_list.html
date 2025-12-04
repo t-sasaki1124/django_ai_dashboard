@@ -3,6 +3,22 @@
 {% block object-tools %}
 {{ block.super }}
 
+<!-- 現在のプラン情報表示 -->
+<div style="margin-top: 10px; margin-bottom: 15px; padding: 12px; background-color: #f5f5f5; border-left: 4px solid #2196F3; border-radius: 4px;">
+  <strong style="color: #333;">現在のプラン:</strong>
+  {% if current_plan %}
+    <span style="color: #2196F3; font-weight: bold; margin-left: 8px;">{{ current_plan.display_name }}</span>
+    {% if current_plan.price > 0 %}
+      <span style="color: #666; margin-left: 8px;">(¥{{ current_plan.price }}/月)</span>
+    {% else %}
+      <span style="color: #666; margin-left: 8px;">(無料)</span>
+    {% endif %}
+  {% else %}
+    <span style="color: #999; margin-left: 8px;">未設定（無料プラン）</span>
+  {% endif %}
+  <a href="/pricing/" style="margin-left: 12px; color: #2196F3; text-decoration: none; font-size: 12px;">プランを変更する →</a>
+</div>
+
 <div style="margin-top: 10px;">
   <button id="toggleCsvForm" type="button" class="button" style="background-color:#4CAF50; color:white;">
     Import CSV
@@ -37,6 +53,21 @@
       🗑 Delete All Comments
     </button>
 </form>
+
+{% if is_premium %}
+<div style="margin-top: 10px;">
+  <a href="./export-report/" class="button" style="background-color:#FF9800; color:white; text-decoration:none; display:inline-block; padding:10px 15px;">
+    📊 レポート出力（有料プラン）
+  </a>
+</div>
+{% else %}
+<div style="margin-top: 10px;">
+  <button type="button" class="button" style="background-color:#9E9E9E; color:white; cursor:not-allowed;" disabled title="この機能は有料プランのみ利用可能です">
+    📊 レポート出力（有料プラン）
+  </button>
+  <span style="margin-left: 10px; color: #666; font-size: 12px;">※ 有料プランにアップグレードすると利用できます</span>
+</div>
+{% endif %}
   
 
 

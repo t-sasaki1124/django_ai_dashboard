@@ -142,43 +142,53 @@
 
     <div class="pricing-cards">
 
-        <!-- Free Plan -->
+        {% for plan in plans %}
         <div class="pricing-card">
-            <div class="plan-name">Free</div>
-            <div class="plan-price">$0 <span>/ month</span></div>
+            {% if plan.name == 'pro' %}
+            <div class="card-badge">ベストセラー</div>
+            {% endif %}
+            <div class="plan-name">{{ plan.display_name }}</div>
+            <div class="plan-price">
+                {% if plan.price == 0 %}
+                    ¥0
+                {% else %}
+                    ¥{{ plan.price|floatformat:0 }}
+                {% endif %}
+                <span>/ month</span>
+            </div>
+            {% if plan.description %}
+            <p style="font-size: 14px; color: #666; margin-bottom: 15px;">{{ plan.description }}</p>
+            {% endif %}
             <ul class="plan-features">
-                <li>YouTubeコメント CSV アップロード</li>
-                <li>データの手動分析</li>
-                <li>Django管理画面フルアクセス</li>
+                {% if plan.name == 'free' %}
+                    <li>YouTubeコメント CSV アップロード</li>
+                    <li>データの手動分析</li>
+                    <li>Django管理画面フルアクセス</li>
+                {% elif plan.name == 'pro' %}
+                    <li>レポート出力機能</li>
+                    <li>コメントの自動収集（API）</li>
+                    <li>AI返信テンプレート生成</li>
+                    <li>週次分析レポート自動生成</li>
+                    <li>クラスタリング・可視化</li>
+                {% elif plan.name == 'enterprise' %}
+                    <li>高度なAI分析（Embedding, pgvector）</li>
+                    <li>オリジナルAIモデル学習</li>
+                    <li>データベース自動バックアップ</li>
+                    <li>専用サポート（Slack）</li>
+                    <li>すべてのPro機能</li>
+                {% endif %}
             </ul>
-            <a class="plan-button plan-button-current" href="#">現在のプラン</a>
+            {% if current_plan and current_plan.id == plan.id %}
+                <a class="plan-button plan-button-current" href="#">現在のプラン</a>
+            {% else %}
+                {% if current_user_plan %}
+                    <a class="plan-button" href="/admin/myapp/userplan/{{ current_user_plan.id }}/change/?plan_id={{ plan.id }}">このプランに変更</a>
+                {% else %}
+                    <a class="plan-button" href="/admin/myapp/userplan/add/?user_id={{ user.id }}&plan_id={{ plan.id }}">このプランを選択</a>
+                {% endif %}
+            {% endif %}
         </div>
-
-        <!-- Pro Plan -->
-        <div class="pricing-card">
-            <div class="plan-name">Pro</div>
-            <div class="plan-price">$980 <span>/ month</span></div>
-            <ul class="plan-features">
-                <li>コメントの自動収集（API）</li>
-                <li>AI返信テンプレート生成</li>
-                <li>週次分析レポート自動生成</li>
-                <li>クラスタリング・可視化</li>
-            </ul>
-            <a class="plan-button" href="#">今すぐアップグレード</a>
-        </div>
-
-        <!-- Enterprise Plan -->
-        <div class="pricing-card">
-            <div class="plan-name">Enterprise</div>
-            <div class="plan-price">$9,800<span>/ month</span></div>
-            <ul class="plan-features">
-                <li>高度なAI分析（Embedding, pgvector）</li>
-                <li>オリジナルAIモデル学習</li>
-                <li>データベース自動バックアップ</li>
-                <li>専用サポート（Slack）</li>
-            </ul>
-            <a class="plan-button" href="#">問い合わせる</a>
-        </div>
+        {% endfor %}
 
     </div>
 
