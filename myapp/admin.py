@@ -165,7 +165,7 @@ class YouTubeCommentAdmin(admin.ModelAdmin):
     def delete_all(self, request):
         count = YouTubeComment.objects.count()
         YouTubeComment.objects.all().delete()
-        messages.success(request, f"🗑 {count} 件のコメントを削除しました。")
+        messages.success(request, f"{count} 件のコメントを削除しました。")
         return redirect("..")
 
     # ✅ レポート出力機能（有料プランのみ）
@@ -216,5 +216,5 @@ class YouTubeCommentAdmin(admin.ModelAdmin):
                 comment.ai_reply or '',
             ])
         
-        messages.success(request, f"📊 レポートを出力しました（{comments.count()}件）。")
+        messages.success(request, f"レポートを出力しました（{comments.count()}件）。")
         return response

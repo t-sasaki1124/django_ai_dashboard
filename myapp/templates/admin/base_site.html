@@ -6,6 +6,140 @@
 {% block extrastyle %}
 {{ block.super }}
 <link rel="icon" href="{% static 'favicon_admin.ico' %}">
+<style>
+    /* カラーパレット */
+    :root {
+        --main-navy: #121634;
+        --bg-gray: #A6A6A6;
+        --accent-yellow: #FFD447;
+    }
+    
+    /* ヘッダー */
+    #header {
+        background-color: var(--main-navy) !important;
+        color: #fff !important;
+    }
+    
+    #header a:link, #header a:visited {
+        color: #fff !important;
+    }
+    
+    /* ブランディング */
+    #site-name a {
+        color: #fff !important;
+    }
+    
+    /* メインコンテンツエリア */
+    #content {
+        background-color: #fff !important;
+    }
+    
+    /* モジュール（カード） */
+    .module, .module table {
+        background-color: #fff !important;
+    }
+    
+    /* リンク */
+    a:link, a:visited {
+        color: var(--main-navy) !important;
+    }
+    
+    a:hover {
+        color: var(--accent-yellow) !important;
+    }
+    
+    /* ボタン */
+    .button, input[type=submit], input[type=button], .submit-row input {
+        background-color: var(--main-navy) !important;
+        color: #fff !important;
+        border-color: var(--main-navy) !important;
+    }
+    
+    .button:hover, input[type=submit]:hover, input[type=button]:hover {
+        background-color: var(--accent-yellow) !important;
+        color: var(--main-navy) !important;
+        border-color: var(--accent-yellow) !important;
+    }
+    
+    /* アクセントボタン */
+    .button.default, input[type=submit].default, .submit-row input.default {
+        background-color: var(--accent-yellow) !important;
+        color: var(--main-navy) !important;
+        border-color: var(--accent-yellow) !important;
+    }
+    
+    .button.default:hover, input[type=submit].default:hover {
+        background-color: var(--main-navy) !important;
+        color: #fff !important;
+        border-color: var(--main-navy) !important;
+    }
+    
+    /* テーブルヘッダー */
+    thead th {
+        background-color: var(--main-navy) !important;
+        color: #fff !important;
+    }
+    
+    /* 選択された行 */
+    .selected {
+        background-color: var(--accent-yellow) !important;
+    }
+    
+    /* アクティブなタブ */
+    .selected a {
+        color: var(--main-navy) !important;
+    }
+    
+    /* サイドバー */
+    #user-tools {
+        color: #fff !important;
+    }
+    
+    #user-tools a {
+        color: #fff !important;
+    }
+    
+    #user-tools a:hover {
+        color: var(--accent-yellow) !important;
+    }
+    
+    /* メッセージ */
+    .messagelist li.success {
+        background-color: var(--accent-yellow) !important;
+        color: var(--main-navy) !important;
+    }
+    
+    /* フォーム要素のフォーカス */
+    input:focus, select:focus, textarea:focus {
+        border-color: var(--accent-yellow) !important;
+        box-shadow: 0 0 0 2px rgba(255, 212, 71, 0.2) !important;
+    }
+    
+    /* Recent actionsセクションを非表示 */
+    .module#recent-actions-module,
+    .module h2:contains("Recent actions"),
+    .module h2:contains("最近のアクション") {
+        display: none !important;
+    }
+    
+    /* Recent actionsモジュール全体を非表示 */
+    .module:has(h2:contains("Recent actions")),
+    .module:has(h2:contains("最近のアクション")) {
+        display: none !important;
+    }
+</style>
+<script>
+    // Recent actionsセクションを削除
+    document.addEventListener('DOMContentLoaded', function() {
+        const modules = document.querySelectorAll('.module');
+        modules.forEach(function(module) {
+            const heading = module.querySelector('h2');
+            if (heading && (heading.textContent.includes('Recent actions') || heading.textContent.includes('最近のアクション'))) {
+                module.style.display = 'none';
+            }
+        });
+    });
+</script>
 {% endblock %}
 
 {% block branding %}

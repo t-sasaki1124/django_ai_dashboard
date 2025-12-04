@@ -4,26 +4,20 @@
 {{ block.super }}
 
 <!-- 現在のプラン情報表示 -->
-<div style="margin-top: 10px; margin-bottom: 15px; padding: 12px; background-color: #f5f5f5; border-left: 4px solid #2196F3; border-radius: 4px;">
+<div style="margin-top: 10px; margin-bottom: 15px; padding: 12px; background-color: #f5f5f5; border-left: 4px solid #121634; border-radius: 4px;">
   <strong style="color: #333;">現在のプラン:</strong>
   {% if current_plan %}
-    <span style="color: #2196F3; font-weight: bold; margin-left: 8px;">{{ current_plan.display_name }}</span>
-    {% if current_plan.price > 0 %}
-      <span style="color: #666; margin-left: 8px;">(¥{{ current_plan.price }}/月)</span>
-    {% else %}
-      <span style="color: #666; margin-left: 8px;">(無料)</span>
-    {% endif %}
+    <a href="/pricing/" style="color: #121634; font-weight: bold; margin-left: 8px; text-decoration: none; cursor: pointer; border-bottom: 1px solid #121634;">{{ current_plan.display_name }}</a>
   {% else %}
-    <span style="color: #999; margin-left: 8px;">未設定（無料プラン）</span>
+    <a href="/pricing/" style="color: #999; margin-left: 8px; text-decoration: none; cursor: pointer; border-bottom: 1px solid #999;">未設定（無料プラン）</a>
   {% endif %}
-  <a href="/pricing/" style="margin-left: 12px; color: #2196F3; text-decoration: none; font-size: 12px;">プランを変更する →</a>
 </div>
 
 <div style="margin-top: 10px;">
-  <button id="toggleCsvForm" type="button" class="button" style="background-color:#4CAF50; color:white;">
+  <button id="toggleCsvForm" type="button" class="button" style="background-color:#121634; color:white;">
     Import CSV
   </button>
-  <button id="toggleJsonForm" type="button" class="button" style="background-color:#2196F3; color:white;">
+  <button id="toggleJsonForm" type="button" class="button" style="background-color:#121634; color:white;">
     Import JSON
   </button>
 
@@ -32,7 +26,7 @@
         action="import-csv/" style="display:none; margin-top:10px;">
     {% csrf_token %}
     <input type="file" name="csv_file" accept=".csv" required>
-    <button type="submit" class="button" style="background-color:#4CAF50; color:white;">
+    <button type="submit" class="button" style="background-color:#121634; color:white;">
       Upload CSV
     </button>
   </form>
@@ -41,7 +35,7 @@
   <form id="jsonUploadForm" method="post" enctype="multipart/form-data" style="display:none; margin-top:10px;">
     {% csrf_token %}
     <input type="file" name="json_file" accept=".json" required>
-    <button type="submit" class="button" style="background-color:#2196F3; color:white;">
+    <button type="submit" class="button" style="background-color:#121634; color:white;">
       Upload JSON
     </button>
   </form>
@@ -50,20 +44,20 @@
 <form action="./delete-all/" method="post" style="margin-top:10px;">
     {% csrf_token %}
     <button type="submit" class="button" style="background-color:#f44336; color:white;">
-      🗑 Delete All Comments
+      Delete All Comments
     </button>
 </form>
 
 {% if is_premium %}
 <div style="margin-top: 10px;">
-  <a href="./export-report/" class="button" style="background-color:#FF9800; color:white; text-decoration:none; display:inline-block; padding:10px 15px;">
-    📊 レポート出力（有料プラン）
+  <a href="./export-report/" class="button" style="background-color:#FFD447; color:#121634; text-decoration:none; display:inline-block; padding:10px 15px; font-weight: bold;">
+    レポート出力（有料プラン）
   </a>
 </div>
 {% else %}
 <div style="margin-top: 10px;">
   <button type="button" class="button" style="background-color:#9E9E9E; color:white; cursor:not-allowed;" disabled title="この機能は有料プランのみ利用可能です">
-    📊 レポート出力（有料プラン）
+    レポート出力（有料プラン）
   </button>
   <span style="margin-left: 10px; color: #666; font-size: 12px;">※ 有料プランにアップグレードすると利用できます</span>
 </div>

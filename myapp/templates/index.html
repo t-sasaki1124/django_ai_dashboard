@@ -6,7 +6,7 @@
 
 <div class="max-w-6xl mx-auto py-8 px-4">
 
-  <!-- ヘッダーセクション（Pricing Plans ボタンのみ） -->
+  <!-- ヘッダーセクション -->
   <header class="mb-10 text-center">
     <h1 class="text-3xl font-bold mb-3 text-gray-900">
       AI Comment Analysis Dashboard
@@ -16,14 +16,126 @@
     </p>
   </header>
 
-  {% if graphic_3d %}
-  <div class="flex justify-center mb-10">
-    <img src="data:image/png;base64,{{ graphic_3d }}" alt="Chart" class="rounded-xl border border-gray-200 shadow" />
+  <!-- インタラクティブな3Dグラフ -->
+  {% if graph_data %}
+  <div class="mb-10">
+    <div id="3d-graph" class="bg-white rounded-xl border border-gray-200 shadow-lg p-4" style="height: 600px;"></div>
+  </div>
+
+  <!-- グラフの説明ウィンドウ -->
+  <div class="bg-gray-50 rounded-xl border border-gray-200 shadow-lg p-6 mb-10">
+    <h2 class="text-2xl font-bold mb-4 text-gray-900">
+      3Dグラフの見方と分析のポイント
+    </h2>
+    
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- 左側：グラフの説明 -->
+      <div class="space-y-4">
+        <div class="bg-white rounded-lg p-4 shadow-sm">
+          <h3 class="font-semibold text-lg mb-2 text-gray-800">グラフの操作方法</h3>
+          <ul class="space-y-2 text-sm text-gray-700">
+            <li class="flex items-start gap-2">
+              <span class="text-blue-600 font-bold">•</span>
+              <span><strong>回転:</strong> マウスでドラッグしてグラフを回転させ、様々な角度から確認できます</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-blue-600 font-bold">•</span>
+              <span><strong>ズーム:</strong> マウスホイールで拡大・縮小できます</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-blue-600 font-bold">•</span>
+              <span><strong>パン:</strong> Shiftキーを押しながらドラッグで移動できます</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-blue-600 font-bold">•</span>
+              <span><strong>詳細確認:</strong> 各点にマウスをホバーするとコメントの詳細が表示されます</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="bg-white rounded-lg p-4 shadow-sm">
+          <h3 class="font-semibold text-lg mb-2 text-gray-800">3つの軸の意味</h3>
+          <ul class="space-y-2 text-sm text-gray-700">
+            <li class="flex items-start gap-2">
+              <span class="text-green-600 font-bold">X軸 (Likes):</span>
+              <span>コメントに付けられた「いいね」の数。右側に行くほど人気のコメントです</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-purple-600 font-bold">Y軸 (Replies):</span>
+              <span>そのコメントへの返信数。上側に行くほど議論が活発なコメントです</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-orange-600 font-bold">Z軸 (時間):</span>
+              <span>コメントが投稿された時間。奥に行くほど新しいコメントです</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 右側：分析のポイントと統計 -->
+      <div class="space-y-4">
+        <div class="bg-white rounded-lg p-4 shadow-sm">
+          <h3 class="font-semibold text-lg mb-2 text-gray-800">分析のポイント</h3>
+          <ul class="space-y-2 text-sm text-gray-700">
+            <li class="flex items-start gap-2">
+              <span class="text-gray-400 font-bold">•</span>
+              <span><strong>右上の点:</strong> いいねも返信も多い、エンゲージメントが高いコメント</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-gray-400 font-bold">•</span>
+              <span><strong>色の変化:</strong> 色が濃い（紫）ほど新しいコメント、薄い（黄）ほど古いコメント</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-gray-400 font-bold">•</span>
+              <span><strong>密集エリア:</strong> 点が集まっている場所は、類似したエンゲージメントパターン</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-gray-400 font-bold">•</span>
+              <span><strong>孤立した点:</strong> 他のコメントと異なる特徴を持つ可能性があります</span>
+            </li>
+          </ul>
+        </div>
+
+        {% if stats %}
+        <div class="bg-white rounded-lg p-4 shadow-sm">
+          <h3 class="font-semibold text-lg mb-3 text-gray-800">統計サマリー</h3>
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div class="bg-blue-50 rounded p-2">
+              <div class="text-gray-600">総コメント数</div>
+              <div class="text-xl font-bold text-blue-600">{{ stats.total_comments }}</div>
+            </div>
+            <div class="bg-green-50 rounded p-2">
+              <div class="text-gray-600">平均いいね数</div>
+              <div class="text-xl font-bold text-green-600">{{ stats.avg_likes|floatformat:1 }}</div>
+            </div>
+            <div class="bg-purple-50 rounded p-2">
+              <div class="text-gray-600">平均返信数</div>
+              <div class="text-xl font-bold text-purple-600">{{ stats.avg_replies|floatformat:1 }}</div>
+            </div>
+            <div class="bg-orange-50 rounded p-2">
+              <div class="text-gray-600">最大いいね数</div>
+              <div class="text-xl font-bold text-orange-600">{{ stats.max_likes }}</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
   {% endif %}
 
   <section class="bg-white shadow rounded-2xl p-6">
-    <h2 class="text-xl font-semibold mb-4">Comment Data</h2>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-semibold">Comment Data</h2>
+      <div class="flex items-center gap-2">
+        <label for="limit-selector" class="text-sm text-gray-600">表示件数:</label>
+        <select id="limit-selector" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          {% for option in limit_options %}
+            <option value="{{ option }}" {% if option == current_limit %}selected{% endif %}>{{ option }}件</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-100">
         <tr>
@@ -46,8 +158,141 @@
         {% endfor %}
       </tbody>
     </table>
+    
+    <!-- ページネーション -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="mt-6 flex items-center justify-between">
+      <div class="text-sm text-gray-600">
+        <span>全 {{ page_obj.paginator.count }} 件中 {{ page_obj.start_index }} - {{ page_obj.end_index }} 件を表示</span>
+        <span class="ml-2">（{{ page_obj.number }} / {{ page_obj.paginator.num_pages }} ページ）</span>
+      </div>
+      
+      <nav class="flex items-center gap-1">
+        {% if page_obj.has_previous %}
+          <a href="?page=1&limit={{ current_limit }}" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">最初</a>
+          <a href="?page={{ page_obj.previous_page_number }}&limit={{ current_limit }}" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">前へ</a>
+        {% else %}
+          <span class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-400 cursor-not-allowed">最初</span>
+          <span class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-400 cursor-not-allowed">前へ</span>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <span class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg font-semibold">{{ num }}</span>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?page={{ num }}&limit={{ current_limit }}" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">{{ num }}</a>
+          {% elif num == 1 or num == page_obj.paginator.num_pages %}
+            <a href="?page={{ num }}&limit={{ current_limit }}" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">{{ num }}</a>
+          {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'4' %}
+            <span class="px-3 py-1.5 text-sm text-gray-400">...</span>
+          {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}&limit={{ current_limit }}" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">次へ</a>
+          <a href="?page={{ page_obj.paginator.num_pages }}&limit={{ current_limit }}" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">最後</a>
+        {% else %}
+          <span class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-400 cursor-not-allowed">次へ</span>
+          <span class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-400 cursor-not-allowed">最後</span>
+        {% endif %}
+      </nav>
+    </div>
+    {% endif %}
   </section>
 
 </div>
+
+<!-- Plotly.js ライブラリ -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<script>
+{% if graph_data %}
+// 3Dグラフのデータを取得
+const graphData = {{ graph_data|safe }};
+
+// Plotly.jsで3Dグラフを描画
+const trace = {
+    x: graphData.x,
+    y: graphData.y,
+    z: graphData.z,
+    mode: 'markers',
+    marker: {
+        size: 5,
+        color: graphData.colors,
+        colorscale: 'Viridis',
+        showscale: true,
+        colorbar: {
+            title: '投稿時間',
+            titleside: 'right'
+        },
+        line: {
+            color: 'rgba(0,0,0,0.1)',
+            width: 0.5
+        }
+    },
+    text: graphData.text,
+    hovertemplate: '<b>%{text}</b><br>' +
+                   'Likes: %{x}<br>' +
+                   'Replies: %{y}<br>' +
+                   '<extra></extra>',
+    type: 'scatter3d'
+};
+
+const layout = {
+    title: {
+        text: '3D YouTube Comment Engagement Analysis',
+        font: { size: 20 }
+    },
+    scene: {
+        xaxis: { 
+            title: 'Likes（いいね数）',
+            titlefont: { size: 14 },
+            backgroundcolor: 'rgba(230, 230, 230, 0.5)',
+            gridcolor: 'white',
+            showbackground: true
+        },
+        yaxis: { 
+            title: 'Replies（返信数）',
+            titlefont: { size: 14 },
+            backgroundcolor: 'rgba(230, 230, 230, 0.5)',
+            gridcolor: 'white',
+            showbackground: true
+        },
+        zaxis: { 
+            title: '投稿時間（タイムスタンプ）',
+            titlefont: { size: 14 },
+            backgroundcolor: 'rgba(230, 230, 230, 0.5)',
+            gridcolor: 'white',
+            showbackground: true
+        },
+        camera: {
+            eye: { x: 1.5, y: 1.5, z: 1.5 }
+        },
+        aspectmode: 'cube'
+    },
+    margin: { l: 0, r: 0, b: 0, t: 50 },
+    paper_bgcolor: 'white',
+    plot_bgcolor: 'white'
+};
+
+const config = {
+    responsive: true,
+    displayModeBar: true,
+    modeBarButtonsToRemove: ['pan2d', 'lasso2d'],
+    displaylogo: false
+};
+
+Plotly.newPlot('3d-graph', [trace], layout, config);
+{% endif %}
+
+// 表示件数セレクタの変更処理
+document.getElementById('limit-selector').addEventListener('change', function() {
+    const limit = this.value;
+    const url = new URL(window.location.href);
+    url.searchParams.set('limit', limit);
+    url.searchParams.set('page', '1'); // 表示件数変更時は1ページ目に戻る
+    window.location.href = url.toString();
+});
+</script>
 
 {% endblock %}
