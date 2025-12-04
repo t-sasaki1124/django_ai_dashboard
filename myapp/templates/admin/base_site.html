@@ -48,17 +48,29 @@
         color: var(--accent-yellow) !important;
     }
     
-    /* ボタン */
-    .button, input[type=submit], input[type=button], .submit-row input {
+    /* ボタン（インラインスタイルがない場合のみ適用） */
+    .button:not([style*="background-color"]), 
+    input[type=submit]:not([style*="background-color"]), 
+    input[type=button]:not([style*="background-color"]), 
+    .submit-row input:not([style*="background-color"]) {
         background-color: var(--main-navy) !important;
         color: #fff !important;
         border-color: var(--main-navy) !important;
     }
     
-    .button:hover, input[type=submit]:hover, input[type=button]:hover {
+    .button:not([style*="background-color"]):hover, 
+    input[type=submit]:not([style*="background-color"]):hover, 
+    input[type=button]:not([style*="background-color"]):hover {
         background-color: var(--accent-yellow) !important;
         color: var(--main-navy) !important;
         border-color: var(--accent-yellow) !important;
+    }
+    
+    /* レポート出力ボタンはホバー時も色を維持 */
+    .button.report-export-btn:hover {
+        background-color: #FFD447 !important;
+        color: #121634 !important;
+        border-color: #FFD447 !important;
     }
     
     /* アクセントボタン */
@@ -76,8 +88,9 @@
     
     /* テーブルヘッダー */
     thead th {
-        background-color: var(--main-navy) !important;
-        color: #fff !important;
+        background-color: #f5f5f5 !important;
+        color: var(--main-navy) !important;
+        border-bottom: 2px solid var(--main-navy) !important;
     }
     
     /* 選択された行 */
@@ -113,6 +126,43 @@
     input:focus, select:focus, textarea:focus {
         border-color: var(--accent-yellow) !important;
         box-shadow: 0 0 0 2px rgba(255, 212, 71, 0.2) !important;
+    }
+    
+    /* 78AFC8（水色）を灰色に変更 */
+    *[style*="78AFC8"],
+    *[style*="78afc8"],
+    *[style*="#78AFC8"],
+    *[style*="#78afc8"] {
+        background-color: #A6A6A6 !important;
+        border-color: #A6A6A6 !important;
+        color: #A6A6A6 !important;
+    }
+    
+    /* Django管理画面のデフォルトの水色（78AFC8相当）を灰色に */
+    .addlink,
+    .changelink,
+    .deletelink,
+    .object-tools a,
+    .module h2 a,
+    .module caption a {
+        color: var(--main-navy) !important;
+    }
+    
+    .addlink:hover,
+    .changelink:hover,
+    .deletelink:hover,
+    .object-tools a:hover,
+    .module h2 a:hover,
+    .module caption a:hover {
+        color: var(--accent-yellow) !important;
+    }
+    
+    /* アクティブなタブや選択された要素の水色を灰色に */
+    .selected,
+    .active,
+    [style*="78AFC8"],
+    [style*="78afc8"] {
+        background-color: #A6A6A6 !important;
     }
     
     /* Recent actionsセクションを非表示 */
