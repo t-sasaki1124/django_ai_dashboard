@@ -2,10 +2,16 @@ from django.contrib import admin, messages
 from django.shortcuts import redirect
 from django.urls import path
 from django.http import HttpResponse
+from django.utils.html import format_html
 from .models import YouTubeComment, UserProfile, Plan, UserPlan
 import csv
 from io import TextIOWrapper
 from datetime import datetime, timedelta
+
+# 管理画面のタイトルをカスタマイズ
+admin.site.site_header = "Management Console"
+admin.site.site_title = "Management Console"
+admin.site.index_title = ""  # インデックスページのタイトルを空に（ヘッダーと重複しないように）
 
 
 @admin.register(Plan)
