@@ -72,7 +72,7 @@
         </div>
       </div>
 
-      <!-- 右側：分析のポイントと統計 -->
+      <!-- 右側：分析のポイント -->
       <div class="space-y-4">
         <div class="bg-white rounded-lg p-4 shadow-sm">
           <h3 class="font-semibold text-lg mb-2 text-gray-800">分析のポイント</h3>
@@ -95,30 +95,31 @@
             </li>
           </ul>
         </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
-        {% if stats %}
-        <div class="bg-white rounded-lg p-4 shadow-sm">
-          <h3 class="font-semibold text-lg mb-3 text-gray-800">統計サマリー</h3>
-          <div class="grid grid-cols-2 gap-3 text-sm">
-            <div class="bg-blue-50 rounded p-2">
-              <div class="text-gray-600">総コメント数</div>
-              <div class="text-xl font-bold text-blue-600">{{ stats.total_comments }}</div>
-            </div>
-            <div class="bg-green-50 rounded p-2">
-              <div class="text-gray-600">平均いいね数</div>
-              <div class="text-xl font-bold text-green-600">{{ stats.avg_likes|floatformat:1 }}</div>
-            </div>
-            <div class="bg-purple-50 rounded p-2">
-              <div class="text-gray-600">平均返信数</div>
-              <div class="text-xl font-bold text-purple-600">{{ stats.avg_replies|floatformat:1 }}</div>
-            </div>
-            <div class="bg-orange-50 rounded p-2">
-              <div class="text-gray-600">最大いいね数</div>
-              <div class="text-xl font-bold text-orange-600">{{ stats.max_likes }}</div>
-            </div>
-          </div>
-        </div>
-        {% endif %}
+  <!-- 統計サマリー -->
+  {% if stats %}
+  <div class="bg-white rounded-xl border border-gray-200 shadow-lg p-6 mb-10">
+    <h2 class="text-2xl font-bold mb-4 text-gray-900">統計サマリー</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+        <div class="text-sm text-gray-600 mb-2">総コメント数</div>
+        <div class="text-2xl font-bold text-blue-600">{{ stats.total_comments }}</div>
+      </div>
+      <div class="bg-green-50 rounded-lg p-4 border border-green-100">
+        <div class="text-sm text-gray-600 mb-2">平均いいね数</div>
+        <div class="text-2xl font-bold text-green-600">{{ stats.avg_likes|floatformat:1 }}</div>
+      </div>
+      <div class="bg-purple-50 rounded-lg p-4 border border-purple-100">
+        <div class="text-sm text-gray-600 mb-2">平均返信数</div>
+        <div class="text-2xl font-bold text-purple-600">{{ stats.avg_replies|floatformat:1 }}</div>
+      </div>
+      <div class="bg-orange-50 rounded-lg p-4 border border-orange-100">
+        <div class="text-sm text-gray-600 mb-2">最大いいね数</div>
+        <div class="text-2xl font-bold text-orange-600">{{ stats.max_likes }}</div>
       </div>
     </div>
   </div>
