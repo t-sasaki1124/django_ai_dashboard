@@ -53,19 +53,6 @@
     box-shadow: 0 14px 35px rgba(0,0,0,0.16);
 }
 
-/* ベストセラータグ */
-.card-badge {
-    position: absolute;
-    top: -12px;
-    right: -12px;
-    background: #2d8cff;
-    color: white;
-    padding: 7px 15px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: bold;
-}
-
 /* --- プラン名 --- */
 .plan-name {
     font-size: 24px;
@@ -144,9 +131,6 @@
 
         {% for plan in plans %}
         <div class="pricing-card">
-            {% if plan.name == 'pro' %}
-            <div class="card-badge">ベストセラー</div>
-            {% endif %}
             <div class="plan-name">{{ plan.display_name }}</div>
             <div class="plan-price">
                 {% if plan.price == 0 %}
