@@ -1,4 +1,9 @@
 from pathlib import Path
+from dotenv import load_dotenv
+import os
+
+# .envファイルを読み込む
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -77,7 +82,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #    - または、Planモデルにstripe_price_idフィールドを追加して管理
 
 # Stripe APIキー（環境変数から取得）
-import os
 STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', '')
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
