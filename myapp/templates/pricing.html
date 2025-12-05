@@ -181,7 +181,14 @@
             {% if current_plan and current_plan.id == plan.id %}
                 <a class="plan-button plan-button-current" href="#">現在のプラン</a>
             {% else %}
-                {% if current_user_plan %}
+                {% if plan.name == 'pro' and stripe_pro_price_id %}
+                    {# ProプランでStripe価格IDが設定されている場合、Stripe決済にリンク #}
+                    <a class="plan-button" href="{% url 'create_checkout_session' plan.id %}">今すぐアップグレード</a>
+                {% elif plan.name == 'pro' and plan.stripe_price_id %}
+                    {# ProプランでPlanモデルにStripe価格IDが設定されている場合、Stripe決済にリンク #}
+                    <a class="plan-button" href="{% url 'create_checkout_session' plan.id %}">今すぐアップグレード</a>
+                {% elif current_user_plan %}
+                    {# その他のプランは管理画面で変更 #}
                     <a class="plan-button" href="/admin/myapp/userplan/{{ current_user_plan.id }}/change/?plan_id={{ plan.id }}">このプランに変更</a>
                 {% else %}
                     <a class="plan-button" href="/admin/myapp/userplan/add/?user_id={{ user.id }}&plan_id={{ plan.id }}">このプランを選択</a>

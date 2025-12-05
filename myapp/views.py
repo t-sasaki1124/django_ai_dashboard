@@ -1,6 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.core.paginator import Paginator
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from .models import YouTubeComment, Plan, UserPlan
 import json
 import pandas as pd
@@ -177,11 +179,263 @@ def pricing(request):
     # すべてのプランを取得
     plans = Plan.objects.all().order_by('price')
     
+    # Stripe公開キーとProプランの価格IDをテンプレートに渡す
+    from django.conf import settings
+    stripe_public_key = getattr(settings, 'STRIPE_PUBLIC_KEY', '')
+    stripe_pro_price_id = getattr(settings, 'STRIPE_PRO_PRICE_ID', '')
+    
     return render(request, "pricing.html", {
         "current_plan": current_plan,
         "current_user_plan": current_user_plan,
         "plans": plans,
         "user": request.user,  # テンプレートでユーザーIDを使用するため
+        "stripe_public_key": stripe_public_key,
+        "stripe_pro_price_id": stripe_pro_price_id,
     })
+
+
+# ============================================
+# Stripe決済機能
+# ============================================
+# 必要なパッケージ: pip install stripe
+# インストールコマンド: pip install stripe
+
+def create_checkout_session(request, plan_id):
+    """
+    Stripe Checkoutセッションを作成して決済画面にリダイレクト
+    
+    必要な設定:
+    - settings.STRIPE_SECRET_KEY: Stripeシークレットキー
+    - settings.STRIPE_SUCCESS_URL: 決済成功後のリダイレクトURL
+    - settings.STRIPE_CANCEL_URL: 決済キャンセル時のリダイレクトURL
+    - Plan.stripe_price_id: Stripe価格ID
+    """
+    if not request.user.is_authenticated:
+        from django.contrib import messages
+        messages.error(request, "ログインが必要です。")
+        return redirect('pricing')
+    
+    try:
+        plan = Plan.objects.get(id=plan_id)
+    except Plan.DoesNotExist:
+        from django.contrib import messages
+        messages.error(request, "プランが見つかりません。")
+        return redirect('pricing')
+    
+    # Stripe価格IDを取得
+    stripe_price_id = plan.stripe_price_id
+    if not stripe_price_id:
+        # settings.pyから取得（フォールバック）
+        from django.conf import settings
+        if plan.name == 'pro':
+            stripe_price_id = getattr(settings, 'STRIPE_PRO_PRICE_ID', '')
+    
+    if not stripe_price_id:
+        from django.contrib import messages
+        messages.error(request, "このプランの決済設定が完了していません。")
+        return redirect('pricing')
+    
+    # Stripe Checkoutセッションを作成
+    import stripe
+    from django.conf import settings
+    from django.contrib import messages
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    # Stripe APIキーの確認
+    if not settings.STRIPE_SECRET_KEY:
+        logger.error("Stripe APIキーが設定されていません")
+        messages.error(request, "Stripe APIキーが設定されていません。")
+        return redirect('pricing')
+    
+    # Stripe価格IDの確認
+    if not stripe_price_id:
+        logger.error(f"Stripe価格IDが取得できませんでした。plan_id: {plan_id}, plan.name: {plan.name}")
+        messages.error(request, "このプランの決済設定が完了していません。")
+        return redirect('pricing')
+    
+    logger.info(f"Stripe Checkoutセッション作成開始: plan_id={plan_id}, stripe_price_id={stripe_price_id}, user_id={request.user.id}")
+    
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price': stripe_price_id,
+                'quantity': 1,
+            }],
+            mode='subscription',  # サブスクリプション（月額課金）
+            success_url=settings.STRIPE_SUCCESS_URL + '?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=settings.STRIPE_CANCEL_URL,
+            customer_email=request.user.email,
+            metadata={
+                'user_id': request.user.id,
+                'plan_id': plan.id,
+            },
+        )
+        
+        logger.info(f"Stripe Checkoutセッション作成成功: session_id={checkout_session.id}, url={checkout_session.url}")
+        
+        # Checkout URLが正しく取得できたか確認
+        if not checkout_session.url:
+            logger.error("Stripe Checkout URLが取得できませんでした")
+            messages.error(request, "Stripe Checkout URLの取得に失敗しました。")
+            return redirect('pricing')
+        
+        # Stripe Checkoutページにリダイレクト
+        return redirect(checkout_session.url)
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe APIエラー: {str(e)}")
+        messages.error(request, f"決済セッションの作成に失敗しました: {str(e)}")
+        return redirect('pricing')
+    except Exception as e:
+        logger.error(f"予期しないエラー: {str(e)}", exc_info=True)
+        messages.error(request, f"予期しないエラーが発生しました: {str(e)}")
+        return redirect('pricing')
+
+
+def checkout_success(request):
+    """
+    決済成功後のコールバック処理
+    Stripe Checkoutからリダイレクトされた後に実行される
+    """
+    session_id = request.GET.get('session_id')
+    
+    if not session_id:
+        from django.contrib import messages
+        messages.error(request, "セッションIDが見つかりません。")
+        return redirect('pricing')
+    
+    if not request.user.is_authenticated:
+        from django.contrib import messages
+        messages.error(request, "ログインが必要です。")
+        return redirect('pricing')
+    
+    import stripe
+    from django.conf import settings
+    from django.contrib import messages
+    from datetime import datetime, timedelta
+    
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    
+    try:
+        # Checkoutセッションを取得
+        session = stripe.checkout.Session.retrieve(session_id)
+        
+        # メタデータからユーザーIDとプランIDを取得
+        user_id = session.metadata.get('user_id')
+        plan_id = session.metadata.get('plan_id')
+        
+        # ユーザーが一致するか確認
+        if int(user_id) != request.user.id:
+            messages.error(request, "ユーザーが一致しません。")
+            return redirect('pricing')
+        
+        # プランを取得
+        try:
+            plan = Plan.objects.get(id=plan_id)
+        except Plan.DoesNotExist:
+            messages.error(request, "プランが見つかりません。")
+            return redirect('pricing')
+        
+        # ユーザープランを更新または作成
+        user_plan, created = UserPlan.objects.get_or_create(
+            user=request.user,
+            defaults={'plan': plan, 'is_active': True}
+        )
+        
+        if not created:
+            user_plan.plan = plan
+            user_plan.is_active = True
+            # 有効期限を1ヶ月後に設定（サブスクリプションの場合）
+            user_plan.expires_at = datetime.now() + timedelta(days=30)
+            user_plan.save()
+        
+        messages.success(request, f"{plan.display_name}プランへの変更が完了しました。")
+        return redirect('index')
+        
+    except stripe.error.StripeError as e:
+        messages.error(request, f"決済情報の確認に失敗しました: {str(e)}")
+        return redirect('pricing')
+
+
+@csrf_exempt
+@require_POST
+def stripe_webhook(request):
+    """
+    Stripe Webhookエンドポイント
+    Stripeから決済完了などのイベントを受け取る
+    
+    必要な設定:
+    - settings.STRIPE_WEBHOOK_SECRET: Webhook署名シークレット
+    - StripeダッシュボードでWebhookエンドポイントを設定: https://yourdomain.com/stripe-webhook/
+    - イベント: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted
+    """
+    import stripe
+    import json
+    from django.conf import settings
+    from django.http import HttpResponse
+    from datetime import datetime, timedelta
+    
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    webhook_secret = settings.STRIPE_WEBHOOK_SECRET
+    
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, webhook_secret
+        )
+    except ValueError:
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError:
+        return HttpResponse(status=400)
+    
+    # イベントタイプに応じて処理
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        # 決済完了時の処理
+        user_id = session['metadata'].get('user_id')
+        plan_id = session['metadata'].get('plan_id')
+        
+        # ユーザープランを更新
+        try:
+            from django.contrib.auth.models import User
+            user = User.objects.get(id=user_id)
+            plan = Plan.objects.get(id=plan_id)
+            
+            user_plan, created = UserPlan.objects.get_or_create(
+                user=user,
+                defaults={'plan': plan, 'is_active': True}
+            )
+            
+            if not created:
+                user_plan.plan = plan
+                user_plan.is_active = True
+                user_plan.expires_at = datetime.now() + timedelta(days=30)
+                user_plan.save()
+        except (User.DoesNotExist, Plan.DoesNotExist):
+            pass
+        
+    elif event['type'] == 'customer.subscription.updated':
+        subscription = event['data']['object']
+        # サブスクリプション更新時の処理
+        # 必要に応じて実装
+        
+    elif event['type'] == 'customer.subscription.deleted':
+        subscription = event['data']['object']
+        # サブスクリプション解約時の処理
+        # ユーザーを無料プランに戻す
+        try:
+            customer_id = subscription.get('customer')
+            # customer_idからuser_idを取得する処理が必要
+            # 現時点では簡易実装
+        except:
+            pass
+    
+    return HttpResponse(status=200)
 
 

@@ -57,3 +57,34 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'myapp' / 'static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ============================================
+# Stripe決済設定
+# ============================================
+# 必要な情報：
+# 1. Stripe公開可能キー（Publishable Key）
+#    - Stripeダッシュボード > 開発者 > APIキー から取得
+#    - 例: pk_test_51xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# 2. Stripeシークレットキー（Secret Key）
+#    - Stripeダッシュボード > 開発者 > APIキー から取得
+#    - 例: sk_test_51xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# 3. Stripe Webhookシークレット
+#    - Stripeダッシュボード > 開発者 > Webhook でエンドポイント作成後、署名シークレットを取得
+#    - 例: whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# 4. Stripe価格ID（Price ID）
+#    - Stripeダッシュボード > 商品 > 価格 でProプランの価格を作成し、価格IDを取得
+#    - 例: price_1xxxxxxxxxxxxxxxxxxxxxxxxx
+#    - または、Planモデルにstripe_price_idフィールドを追加して管理
+
+# Stripe APIキー（環境変数から取得）
+import os
+STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', '')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+
+# Stripe価格ID（Proプラン）
+STRIPE_PRO_PRICE_ID = os.environ.get('STRIPE_PRO_PRICE_ID', '')
+
+# 決済成功後のリダイレクトURL
+STRIPE_SUCCESS_URL = 'http://127.0.0.1:8000/checkout-success/'
+STRIPE_CANCEL_URL = 'http://127.0.0.1:8000/pricing/'

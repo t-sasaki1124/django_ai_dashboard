@@ -36,6 +36,8 @@ class Plan(models.Model):
     price = models.IntegerField(default=0, verbose_name="価格（円/月）")
     is_premium = models.BooleanField(default=False, verbose_name="有料プラン")
     description = models.TextField(blank=True, verbose_name="説明")
+    # Stripeの価格ID
+    stripe_price_id = models.CharField(max_length=200, blank=True, null=True, verbose_name="Stripe価格ID", help_text="price_1SaoNrHKU8SnCbsFH2ObkYS4")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

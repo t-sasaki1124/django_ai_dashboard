@@ -39,6 +39,85 @@ pip install -r requirements.txt
 pip install django pandas matplotlib psycopg2-binary
 ```
 
+### Stripe決済機能を使用する場合
+```bash
+pip install stripe
+```
+
+---
+
+## 💳 Stripe決済機能の設定（オプション）
+
+Proプランの決済にStripeを使用する場合、以下の設定が必要です。
+
+### 1. Stripeアカウントの作成
+1. [Stripe](https://stripe.com/jp) にアカウントを作成
+2. ダッシュボードにログイン
+
+### 2. APIキーの取得
+1. Stripeダッシュボード > **開発者** > **APIキー** に移動
+2. **公開可能キー（Publishable Key）** をコピー
+   - 例: `pk_test_51xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+3. **シークレットキー（Secret Key）** をコピー
+   - 例: `sk_test_51xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+
+### 3. 商品と価格の作成
+1. Stripeダッシュボード > **商品** > **商品を追加** をクリック
+2. 商品名: 「Proプラン」など
+3. 価格を設定（例: ¥980/月）
+4. 請求頻度: **毎月**
+5. **価格ID（Price ID）** をコピー
+   - 例: `price_1xxxxxxxxxxxxxxxxxxxxxxxxx`
+
+### 4. Webhookエンドポイントの設定（本番環境用）
+1. Stripeダッシュボード > **開発者** > **Webhook** に移動
+2. **エンドポイントを追加** をクリック
+3. エンドポイントURL: `https://yourdomain.com/stripe-webhook/`
+4. イベントを選択:
+   - `checkout.session.completed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+5. **署名シークレット（Signing secret）** をコピー
+   - 例: `whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+
+### 5. settings.pyの設定
+`myproject/settings.py` の以下の項目を設定：
+
+```python
+# Stripe APIキー
+STRIPE_PUBLIC_KEY = 'pk_test_51xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+STRIPE_SECRET_KEY = 'sk_test_51xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+STRIPE_WEBHOOK_SECRET = 'whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+
+# Stripe価格ID（Proプラン）
+STRIPE_PRO_PRICE_ID = 'price_1xxxxxxxxxxxxxxxxxxxxxxxxx'
+
+# 決済成功後のリダイレクトURL（本番環境では適宜変更）
+STRIPE_SUCCESS_URL = 'http://127.0.0.1:8000/checkout-success/'
+STRIPE_CANCEL_URL = 'http://127.0.0.1:8000/pricing/'
+```
+
+**⚠️ セキュリティ注意事項:**
+- 本番環境では環境変数や `.env` ファイルから取得することを推奨
+- シークレットキーは絶対にGitにコミットしないでください
+
+### 6. PlanモデルにStripe価格IDを設定
+1. Django管理画面にログイン
+2. **プラン** > **Proプラン** を編集
+3. **Stripe価格ID** フィールドに価格IDを入力
+4. 保存
+
+### 7. views.pyのコメントアウトを解除
+`myapp/views.py` の以下の関数内のコメントアウトを解除：
+- `create_checkout_session()`
+- `checkout_success()`
+- `stripe_webhook()`
+
+### 8. 動作確認
+1. `/pricing/` にアクセス
+2. Proプランの **「今すぐアップグレード」** ボタンをクリック
+3. Stripe Checkout画面にリダイレクトされることを確認
+
 ---
 
 ## ⚙️ 3. Django初期設定
