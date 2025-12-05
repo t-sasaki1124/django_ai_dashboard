@@ -17,7 +17,7 @@ admin.site.index_title = ""  # インデックスページのタイトルを空�
 @admin.register(Plan)
 class PlanAdmin(admin.ModelAdmin):
     list_display = ('display_name', 'name', 'price', 'is_premium', 'created_at')
-    list_filter = ('is_premium', 'name')
+    list_filter = ()  # フィルター機能を削除
     search_fields = ('display_name', 'name', 'description')
     readonly_fields = ('created_at', 'updated_at')
     fieldsets = (
@@ -34,7 +34,7 @@ class PlanAdmin(admin.ModelAdmin):
 @admin.register(UserPlan)
 class UserPlanAdmin(admin.ModelAdmin):
     list_display = ('user', 'plan', 'is_active', 'started_at', 'expires_at', 'is_premium_display')
-    list_filter = ('plan', 'is_active', 'started_at')
+    list_filter = ()  # フィルター機能を削除
     search_fields = ('user__username', 'user__email', 'plan__display_name')
     readonly_fields = ('created_at', 'updated_at', 'is_premium_display')
     fieldsets = (
@@ -97,7 +97,7 @@ class UserPlanAdmin(admin.ModelAdmin):
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'is_premium', 'created_at', 'updated_at')
-    list_filter = ('is_premium', 'created_at')
+    list_filter = ()  # フィルター機能を削除
     search_fields = ('user__username', 'user__email')
     readonly_fields = ('created_at', 'updated_at')
 
