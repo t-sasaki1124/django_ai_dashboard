@@ -51,10 +51,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
+# SQLiteでの接続をするための情報
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+# PostgreSQLでの接続をするための情報
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "comment_dashboard",
+        "USER": "comment_user",
+        "PASSWORD": "your_password_here",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 

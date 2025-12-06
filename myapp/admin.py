@@ -1,4 +1,6 @@
 from django.contrib import admin, messages
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from django.urls import path
 from django.http import HttpResponse
@@ -12,6 +14,14 @@ from datetime import datetime, timedelta
 admin.site.site_header = "Management Console"
 admin.site.site_title = "Management Console"
 admin.site.index_title = ""  # インデックスページのタイトルを空に（ヘッダーと重複しないように）
+
+# UserAdminのフィルター機能を削除
+class UserAdmin(BaseUserAdmin):
+    list_filter = ()  # フィルター機能を削除
+
+# 既存のUserAdminを登録解除して、カスタムUserAdminを登録
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
 
 
 @admin.register(Plan)
