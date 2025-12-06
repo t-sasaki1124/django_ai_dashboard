@@ -14,6 +14,59 @@
     <p class="text-sm text-gray-500 mb-6">
       YouTube コメントのエンゲージメントを 3D で可視化し、一覧で確認できます。
     </p>
+    
+    <!-- CSV/JSONインポート機能 -->
+    <div class="flex justify-center gap-4 mb-6">
+      <button id="toggleCsvForm" type="button" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-medium">
+        Import CSV
+      </button>
+      <button id="toggleJsonForm" type="button" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium">
+        Import JSON
+      </button>
+    </div>
+
+    <!-- CSV upload form -->
+    <form id="csvUploadForm" method="post" enctype="multipart/form-data" action="{% url 'import_csv' %}" style="display:none; max-width: 400px; margin: 0 auto 20px;">
+      {% csrf_token %}
+      <div class="flex flex-col gap-3">
+        <input type="file" name="csv_file" accept=".csv" required class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+        <button type="submit" class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-medium">
+          Upload CSV
+        </button>
+      </div>
+    </form>
+
+    <!-- JSON upload form -->
+    <form id="jsonUploadForm" method="post" enctype="multipart/form-data" action="{% url 'import_json' %}" style="display:none; max-width: 400px; margin: 0 auto 20px;">
+      {% csrf_token %}
+      <div class="flex flex-col gap-3">
+        <input type="file" name="json_file" accept=".json" required class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button type="submit" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium">
+          Upload JSON
+        </button>
+      </div>
+    </form>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const csvBtn = document.getElementById("toggleCsvForm");
+      const jsonBtn = document.getElementById("toggleJsonForm");
+      const csvForm = document.getElementById("csvUploadForm");
+      const jsonForm = document.getElementById("jsonUploadForm");
+
+      if (csvBtn && jsonBtn && csvForm && jsonForm) {
+        csvBtn.addEventListener("click", function() {
+          csvForm.style.display = csvForm.style.display === "none" ? "block" : "none";
+          jsonForm.style.display = "none";
+        });
+
+        jsonBtn.addEventListener("click", function() {
+          jsonForm.style.display = jsonForm.style.display === "none" ? "block" : "none";
+          csvForm.style.display = "none";
+        });
+      }
+    });
+    </script>
   </header>
 
   <!-- インタラクティブな3Dグラフ -->

@@ -1,11 +1,14 @@
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.contrib import messages
 from .models import YouTubeComment, Plan, UserPlan
 import json
 import pandas as pd
+import csv
+from io import TextIOWrapper
 from datetime import datetime
 
 
@@ -163,6 +166,87 @@ def comments_table(request):
     }, request=request)
     
     return JsonResponse({'html': html})
+
+
+def import_csv(request):
+    """CSVファイルをインポート"""
+    if request.method == "POST" and request.FILES.get("csv_file"):
+        csv_file = TextIOWrapper(request.FILES["csv_file"].file, encoding="utf-8")
+        reader = csv.DictReader(csv_file)
+        count = 0
+        for row in reader:
+            YouTubeComment.objects.create(
+                video_id=row.get("video_id", ""),
+                comment_id=row.get("comment_id", ""),
+                comment_text=row.get("comment_text", ""),
+                author=row.get("author", ""),
+                like_count=int(row.get("like_count") or 0),
+                reply_count=int(row.get("reply_count") or 0),
+                reply_depth_potential=int(row.get("reply_depth_potential") or 0),
+                engagement_score=float(row.get("engagement_score") or 0),
+                created_at=row.get("created_at") or None,
+                ai_reply=row.get("ai_reply") if row.get("ai_reply") and row.get("ai_reply") != "null" else None,
+                embedding=row.get("embedding") if row.get("embedding") else None,
+            )
+            count += 1
+        messages.success(request, f"{count} 件のコメントをインポートしました。")
+        return redirect("index")
+    
+    messages.error(request, "CSVファイルを選択してください。")
+    return redirect("index")
+
+
+def import_json(request):
+    """JSONファイルをインポート"""
+    if request.method == "POST" and request.FILES.get("json_file"):
+        json_file = request.FILES["json_file"]
+        try:
+            data = json.load(json_file)
+            count = 0
+            
+            # JSONが配列の場合
+            if isinstance(data, list):
+                for item in data:
+                    YouTubeComment.objects.create(
+                        video_id=item.get("video_id", ""),
+                        comment_id=item.get("comment_id", ""),
+                        comment_text=item.get("comment_text", ""),
+                        author=item.get("author", ""),
+                        like_count=int(item.get("like_count") or 0),
+                        reply_count=int(item.get("reply_count") or 0),
+                        reply_depth_potential=int(item.get("reply_depth_potential") or 0),
+                        engagement_score=float(item.get("engagement_score") or 0),
+                        created_at=item.get("created_at") or None,
+                        ai_reply=item.get("ai_reply") if item.get("ai_reply") and item.get("ai_reply") != "null" else None,
+                        embedding=item.get("embedding") if item.get("embedding") else None,
+                    )
+                    count += 1
+            # JSONがオブジェクトでcommentsキーがある場合
+            elif isinstance(data, dict) and "comments" in data:
+                for item in data["comments"]:
+                    YouTubeComment.objects.create(
+                        video_id=item.get("video_id", ""),
+                        comment_id=item.get("comment_id", ""),
+                        comment_text=item.get("comment_text", ""),
+                        author=item.get("author", ""),
+                        like_count=int(item.get("like_count") or 0),
+                        reply_count=int(item.get("reply_count") or 0),
+                        reply_depth_potential=int(item.get("reply_depth_potential") or 0),
+                        engagement_score=float(item.get("engagement_score") or 0),
+                        created_at=item.get("created_at") or None,
+                        ai_reply=item.get("ai_reply") if item.get("ai_reply") and item.get("ai_reply") != "null" else None,
+                        embedding=item.get("embedding") if item.get("embedding") else None,
+                    )
+                    count += 1
+            
+            messages.success(request, f"{count} 件のコメントをインポートしました。")
+            return redirect("index")
+        except json.JSONDecodeError:
+            messages.error(request, "JSONファイルの形式が正しくありません。")
+            return redirect("index")
+    
+    messages.error(request, "JSONファイルを選択してください。")
+    return redirect("index")
 
 
 def pricing(request):
