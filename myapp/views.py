@@ -278,6 +278,45 @@ def pricing(request):
     })
 
 
+def downgrade_to_free(request):
+    """Proプランから無料プランへ変更"""
+    if not request.user.is_authenticated:
+        messages.error(request, "ログインが必要です。")
+        return redirect('pricing')
+    
+    if request.method == "POST":
+        try:
+            # 現在のユーザープランを取得
+            user_plan = UserPlan.objects.get(user=request.user, is_active=True)
+            current_plan = user_plan.plan
+            
+            # 無料プランを取得
+            free_plan = Plan.objects.get(name='free')
+            
+            # プランを無料プランに変更
+            user_plan.plan = free_plan
+            user_plan.is_active = True
+            user_plan.save()
+            
+            # 完了メッセージ
+            messages.success(
+                request,
+                "ご利用ありがとうございました。\n"
+                f"{current_plan.display_name if current_plan else 'Proプラン'}のご契約は終了し、無料プランへ変更されました。\n"
+                "引き続き、無料プランにてサービスをご利用いただけます。"
+            )
+            
+            return redirect('pricing')
+        except UserPlan.DoesNotExist:
+            messages.error(request, "ユーザープランが見つかりません。")
+            return redirect('pricing')
+        except Plan.DoesNotExist:
+            messages.error(request, "無料プランが見つかりません。")
+            return redirect('pricing')
+    
+    return redirect('pricing')
+
+
 # ============================================
 # Stripe決済機能
 # ============================================
@@ -306,6 +345,12 @@ def create_checkout_session(request, plan_id):
         messages.error(request, "プランが見つかりません。")
         return redirect('pricing')
     
+    # 無料プランの場合は管理画面にリダイレクト
+    if not plan.is_premium:
+        from django.contrib import messages
+        messages.info(request, "無料プランは管理画面から変更できます。")
+        return redirect('admin:myapp_userplan_changelist')
+    
     # Stripe価格IDを取得
     stripe_price_id = plan.stripe_price_id
     if not stripe_price_id:
@@ -316,8 +361,8 @@ def create_checkout_session(request, plan_id):
     
     if not stripe_price_id:
         from django.contrib import messages
-        messages.error(request, "このプランの決済設定が完了していません。")
-        return redirect('pricing')
+        messages.error(request, "このプランの決済設定が完了していません。管理画面から変更してください。")
+        return redirect('admin:myapp_userplan_changelist')
     
     # Stripe Checkoutセッションを作成
     import stripe
