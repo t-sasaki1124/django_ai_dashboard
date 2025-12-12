@@ -4,9 +4,38 @@
 
 {% block content %}
 
-<div class="max-w-6xl mx-auto py-8 px-4">
+<div class="flex h-screen">
+  <!-- 左ペイン（サイドバー） - Notion風デザイン -->
+  <!-- 
+    Notion風デザインルール:
+    - アクティブ: bg-gray-100 + text-gray-900 + border-l-2 border-gray-400 (薄いグレー背景 + 濃い文字 + 左の細いアクセント線)
+    - ホバー: hover:bg-gray-100/80 (薄いグレーの面がふわっと)
+    - 非アクティブ: text-gray-600 (透明背景、薄いグレーテキスト)
+    - アニメーション: transition-colors duration-150 (控えめな色変化のみ)
+  -->
+  <aside class="w-64 bg-gray-50/50 border-r border-gray-200/60 flex-shrink-0 overflow-y-auto">
+    <div class="p-5">
+      <h2 class="text-lg font-semibold mb-5 text-gray-800 px-3">Comment Analysis</h2>
+      <nav class="space-y-1">
+        <!-- アクティブ: 薄いグレー背景 + 濃い文字 + 左の細いアクセント線 -->
+        <a href="#" id="nav-main" class="block px-3 py-2.5 rounded-md bg-gray-100 text-gray-900 border-l-2 border-gray-400 transition-colors duration-150 nav-link active">
+          <span class="font-medium text-sm">メインページ</span>
+        </a>
+        <!-- 非アクティブ: 透明背景、ホバーで薄いグレー面がふわっと -->
+        <a href="#" id="nav-comments" class="block px-3 py-2.5 rounded-md text-gray-600 hover:bg-gray-100/80 transition-colors duration-150 nav-link">
+          <span class="font-medium text-sm">コメントページ</span>
+        </a>
+      </nav>
+    </div>
+  </aside>
 
-  <!-- ヘッダーセクション -->
+  <!-- メインコンテンツエリア -->
+  <main class="flex-1 overflow-y-auto bg-gray-50">
+    <div class="max-w-6xl mx-auto py-8 px-4">
+      
+      <!-- メインページコンテンツ -->
+      <div id="main-page" class="page-content">
+        <!-- ヘッダーセクション -->
   <header class="mb-10 text-center">
     <h1 class="text-3xl font-bold mb-3 text-gray-900">
       Comment Analysis
@@ -263,19 +292,31 @@
     </div>
   </div>
   {% endif %}
-
-  <section class="bg-white shadow rounded-2xl p-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-xl font-semibold">Comment Data</h2>
-      <div class="flex items-center gap-2">
-        <label for="limit-selector" class="text-sm text-gray-600">表示件数:</label>
-        <select id="limit-selector" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-          {% for option in limit_options %}
-            <option value="{{ option }}" {% if option == current_limit %}selected{% endif %}>{{ option }}件</option>
-          {% endfor %}
-        </select>
       </div>
-    </div>
+      
+      <!-- コメントページコンテンツ -->
+      <div id="comments-page" class="page-content" style="display: none;">
+        <header class="mb-10 text-center">
+          <h1 class="text-3xl font-bold mb-3 text-gray-900">
+            コメント一覧
+          </h1>
+          <p class="text-sm text-gray-500 mb-6">
+            すべてのコメントを一覧で確認できます。
+          </p>
+        </header>
+
+        <section class="bg-white shadow rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold">Comment Data</h2>
+            <div class="flex items-center gap-2">
+              <label for="limit-selector-comments" class="text-sm text-gray-600">表示件数:</label>
+              <select id="limit-selector-comments" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                {% for option in limit_options %}
+                  <option value="{{ option }}" {% if option == current_limit %}selected{% endif %}>{{ option }}件</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-100">
         <tr>
@@ -338,8 +379,11 @@
       </nav>
     </div>
     {% endif %}
-  </section>
-
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
 </div>
 
 <!-- Plotly.js ライブラリ -->
@@ -425,14 +469,18 @@ const config = {
 Plotly.newPlot('3d-graph', [trace], layout, config);
 {% endif %}
 
-// 表示件数セレクタの変更処理
-document.getElementById('limit-selector').addEventListener('change', function() {
-    const limit = this.value;
-    const url = new URL(window.location.href);
-    url.searchParams.set('limit', limit);
-    url.searchParams.set('page', '1'); // 表示件数変更時は1ページ目に戻る
-    window.location.href = url.toString();
-});
+// 表示件数セレクタの変更処理（コメントページ用）
+const limitSelectorComments = document.getElementById('limit-selector-comments');
+if (limitSelectorComments) {
+    limitSelectorComments.addEventListener('change', function() {
+        const limit = this.value;
+        const url = new URL(window.location.href);
+        url.searchParams.set('limit', limit);
+        url.searchParams.set('page', '1'); // 表示件数変更時は1ページ目に戻る
+        url.searchParams.set('tab', 'comments'); // コメントページを維持
+        window.location.href = url.toString();
+    });
+}
 
 // 3Dクラスタリング可視化
 {% if cluster_data %}
@@ -699,6 +747,72 @@ try {
     }
 }
 {% endif %}
+</script>
+
+<script>
+// ページ切り替え機能
+document.addEventListener('DOMContentLoaded', function() {
+    const navMain = document.getElementById('nav-main');
+    const navComments = document.getElementById('nav-comments');
+    const mainPage = document.getElementById('main-page');
+    const commentsPage = document.getElementById('comments-page');
+    
+    // 要素が存在するか確認
+    if (!mainPage || !commentsPage || !navMain || !navComments) {
+        console.error('必要な要素が見つかりません:', {
+            mainPage: !!mainPage,
+            commentsPage: !!commentsPage,
+            navMain: !!navMain,
+            navComments: !!navComments
+        });
+        return;
+    }
+    
+    function showPage(page) {
+        // すべてのページを非表示
+        if (mainPage) mainPage.style.display = 'none';
+        if (commentsPage) commentsPage.style.display = 'none';
+        
+        // Notion風スタイル: アクティブ = 薄いグレー背景 + 濃い文字 + 左アクセント / 非アクティブ = 透明 + 薄いグレーテキスト
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('bg-gray-100', 'text-gray-900', 'border-l-2', 'border-gray-400', 'active');
+            link.classList.add('text-gray-600');
+        });
+        
+        // 選択されたページを表示
+        if (page === 'main' && mainPage && navMain) {
+            mainPage.style.display = 'block';
+            navMain.classList.remove('text-gray-600');
+            navMain.classList.add('bg-gray-100', 'text-gray-900', 'border-l-2', 'border-gray-400', 'active');
+        } else if (page === 'comments' && commentsPage && navComments) {
+            commentsPage.style.display = 'block';
+            navComments.classList.remove('text-gray-600');
+            navComments.classList.add('bg-gray-100', 'text-gray-900', 'border-l-2', 'border-gray-400', 'active');
+        }
+    }
+    
+    // ナビゲーションリンクのクリックイベント
+    navMain.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('メインページをクリック');
+        showPage('main');
+    });
+    
+    navComments.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('コメントページをクリック');
+        showPage('comments');
+    });
+    
+    // URLパラメータでページを指定できるように
+    const urlParams = new URLSearchParams(window.location.search);
+    const pageParam = urlParams.get('tab');
+    if (pageParam === 'comments') {
+        showPage('comments');
+    } else {
+        showPage('main');
+    }
+});
 </script>
 
 {% endblock %}
