@@ -10,6 +10,241 @@ import pandas as pd
 import csv
 from io import TextIOWrapper
 from datetime import datetime
+import numpy as np
+import re
+from collections import Counter
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+try:
+    from janome.tokenizer import Tokenizer
+    JANOME_AVAILABLE = True
+except ImportError:
+    JANOME_AVAILABLE = False
+
+
+def clean_text(text):
+    """Basic text cleaning: URLs, mentions, excessive symbols."""
+    if pd.isna(text):
+        return ""
+    
+    text = str(text)
+    # Remove URLs
+    text = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', text)
+    # Remove mentions (e.g., @username)
+    text = re.sub(r'@\w+', '', text)
+    # Remove excessive whitespace
+    text = re.sub(r'\s+', ' ', text)
+    # Remove excessive symbols (keep basic punctuation)
+    text = re.sub(r'[^\w\s.,!?;:()\-]', '', text)
+    return text.strip()
+
+
+def extract_japanese_words(text):
+    """Extract meaningful Japanese words using morphological analysis."""
+    if not text:
+        return []
+    
+    # Remove URLs, mentions, and clean text
+    text = re.sub(r'http[s]?://\S+', '', text)
+    text = re.sub(r'@\w+', '', text)
+    
+    words = []
+    
+    if JANOME_AVAILABLE:
+        try:
+            tokenizer = Tokenizer()
+            tokens = tokenizer.tokenize(text)
+            
+            # Filter stop words and extract meaningful words
+            stop_words = {'の', 'に', 'は', 'を', 'が', 'で', 'と', 'も', 'か', 'な', 'だ', 'です', 'ます', 'ました', 'て', 'た', 'する', 'した', 'ある', 'いる', 'なる', 'れる', 'られる', 'です', 'ます', 'でした', 'ました', 'です', 'ます', 'です', 'ます'}
+            stop_pos = ['助詞', '助動詞', '記号']
+            
+            for token in tokens:
+                surface = token.surface
+                pos = token.part_of_speech.split(',')[0]
+                
+                # Skip stop words and stop parts of speech
+                if surface not in stop_words and pos not in stop_pos:
+                    # Keep nouns, verbs, adjectives, and meaningful words
+                    if pos in ['名詞', '動詞', '形容詞'] or len(surface) >= 2:
+                        if len(surface) >= 2 and len(surface) <= 10:
+                            words.append(surface)
+        except Exception:
+            # Fallback to simple extraction if tokenization fails
+            pass
+    
+    # Fallback: simple character-based extraction
+    if not words:
+        japanese_pattern = r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\w]+'
+        phrases = re.findall(japanese_pattern, text)
+        stop_words = {'の', 'に', 'は', 'を', 'が', 'で', 'と', 'も', 'か', 'な', 'だ', 'です', 'ます', 'ました', 'て', 'た', 'する', 'した', 'ある', 'いる', 'なる', 'れる', 'られる'}
+        words = [p for p in phrases if 2 <= len(p) <= 10 and p not in stop_words]
+    
+    return words
+
+
+def analyze_cluster_features(comments, cluster_labels, vectorizer, n_clusters):
+    """Analyze features of each cluster and generate summary."""
+    cluster_analyses = []
+    
+    # Get feature names from vectorizer
+    feature_names = vectorizer.get_feature_names_out()
+    
+    for i in range(n_clusters):
+        mask = np.array(cluster_labels) == i
+        cluster_comments = [comments[j] for j in range(len(comments)) if mask[j]]
+        
+        if len(cluster_comments) == 0:
+            continue
+        
+        # Extract meaningful words from comments using morphological analysis
+        all_words = []
+        for comment in cluster_comments:
+            words = extract_japanese_words(comment)
+            all_words.extend(words)
+        
+        # Count word frequency
+        word_freq = Counter(all_words)
+        
+        # Get top keywords: combine TF-IDF and frequency-based approach
+        # First, get TF-IDF top keywords
+        cluster_text = ' '.join(cluster_comments)
+        cluster_vector = vectorizer.transform([cluster_text])
+        feature_array = cluster_vector.toarray()[0]
+        top_indices = np.argsort(feature_array)[-15:][::-1]  # Top 15 keywords
+        tfidf_keywords = [feature_names[idx] for idx in top_indices if feature_array[idx] > 0]
+        
+        # Get top frequent words (at least 2 occurrences)
+        frequent_words = [word for word, count in word_freq.most_common(20) if count >= 2]
+        
+        # Combine and deduplicate, prioritize frequent words
+        combined_keywords = []
+        seen = set()
+        
+        # Add frequent words first (they are more reliable)
+        for word in frequent_words[:5]:
+            if word not in seen and len(word) >= 2:
+                combined_keywords.append(word)
+                seen.add(word)
+        
+        # Add TF-IDF keywords that aren't already included
+        for keyword in tfidf_keywords:
+            if keyword not in seen and len(keyword) >= 2:
+                combined_keywords.append(keyword)
+                seen.add(keyword)
+        
+        # Get top 3 keywords
+        top_keywords = combined_keywords[:3]
+        
+        # Generate summary
+        avg_length = np.mean([len(c) for c in cluster_comments])
+        sample_comments = cluster_comments[:3]  # Sample comments
+        
+        cluster_analyses.append({
+            'cluster_id': i,
+            'comment_count': len(cluster_comments),
+            'top_keywords': top_keywords,  # Top 3 keywords (unified)
+            'avg_comment_length': round(avg_length, 1),
+            'sample_comments': sample_comments
+        })
+    
+    return cluster_analyses
+
+
+def perform_clustering(comments_df, n_clusters=6):
+    """Perform 3D clustering on comments."""
+    if comments_df is None or len(comments_df) == 0:
+        return None
+    
+    # Check if comment_text column exists
+    if 'comment_text' not in comments_df.columns:
+        return None
+    
+    try:
+        # Extract and clean comments
+        comments = comments_df['comment_text'].apply(clean_text).tolist()
+        comments = [c for c in comments if c and len(c.strip()) > 0]  # Remove empty comments
+        
+        # Limit max clusters to 6
+        max_clusters = min(6, n_clusters)
+        if len(comments) < max_clusters:
+            max_clusters = max(2, len(comments) // 2)
+        
+        if len(comments) < 2:
+            return None
+        
+        # Vectorize
+        vectorizer = TfidfVectorizer(
+            max_features=1000,
+            stop_words=None,
+            ngram_range=(1, 2),
+            min_df=1,
+            max_df=0.95
+        )
+        vectors = vectorizer.fit_transform(comments)
+        
+        if vectors.shape[0] < 2:
+            return None
+        
+        # Reduce to 3D
+        pca = PCA(n_components=3, random_state=42)
+        vectors_3d = pca.fit_transform(vectors.toarray())
+        
+        # Cluster
+        kmeans = KMeans(n_clusters=max_clusters, random_state=42, n_init=10)
+        cluster_labels = kmeans.fit_predict(vectors_3d)
+        
+        # Analyze cluster features
+        cluster_analyses = analyze_cluster_features(comments, cluster_labels.tolist(), vectorizer, max_clusters)
+        
+        # Calculate cluster centers and radii for sphere visualization
+        cluster_centers = []
+        cluster_radii = []
+        for i in range(max_clusters):
+            mask = cluster_labels == i
+            if np.sum(mask) > 0:
+                cluster_points = vectors_3d[mask]
+                center = np.mean(cluster_points, axis=0)
+                # Calculate radius as max distance from center to points in cluster
+                distances = np.linalg.norm(cluster_points - center, axis=1)
+                radius = np.max(distances) if len(distances) > 0 else 0.1
+                cluster_centers.append(center.tolist())
+                cluster_radii.append(float(radius))
+            else:
+                cluster_centers.append([0, 0, 0])
+                cluster_radii.append(0.1)
+        
+        # Add jitter to points to prevent overlapping
+        # Calculate the overall scale of the data
+        data_range = np.max(vectors_3d, axis=0) - np.min(vectors_3d, axis=0)
+        jitter_scale = np.mean(data_range) * 0.02  # 2% of average range
+        
+        # Add small random offset to each point
+        np.random.seed(42)  # For reproducibility
+        jitter = np.random.normal(0, jitter_scale, vectors_3d.shape)
+        vectors_3d_jittered = vectors_3d + jitter
+        
+        # Prepare data for visualization
+        cluster_data = {
+            'x': vectors_3d_jittered[:, 0].tolist(),
+            'y': vectors_3d_jittered[:, 1].tolist(),
+            'z': vectors_3d_jittered[:, 2].tolist(),
+            'cluster_labels': cluster_labels.tolist(),
+            'comments': comments,
+            'explained_variance': float(pca.explained_variance_ratio_.sum()),
+            'n_clusters': max_clusters,
+            'cluster_centers': cluster_centers,
+            'cluster_radii': cluster_radii,
+            'cluster_analyses': cluster_analyses
+        }
+        
+        return cluster_data
+    except Exception as e:
+        import traceback
+        print(f"Clustering error: {e}")
+        print(traceback.format_exc())
+        return None
 
 
 def index(request):
@@ -124,6 +359,20 @@ def index(request):
                 advice_items.append("現在のエンゲージメント状況は良好です。継続的な分析と改善により、さらなる成長が期待できます。")
             
             advice = advice_items
+        
+        # 3Dクラスタリング処理
+        cluster_data = None
+        if len(df) > 0:
+            try:
+                cluster_data = perform_clustering(df, n_clusters=6)
+            except Exception as e:
+                import traceback
+                print(f"Clustering failed: {e}")
+                print(traceback.format_exc())
+                cluster_data = None
+    else:
+        # comments_for_graphが存在しない場合の初期化
+        cluster_data = None
 
     return render(request, "index.html", {
         "graph_data": json.dumps(graph_data) if graph_data else None,
@@ -135,6 +384,7 @@ def index(request):
         "is_premium": is_premium,
         "analysis": analysis,
         "advice": advice,
+        "cluster_data": json.dumps(cluster_data) if cluster_data is not None else None,
     })
 
 
