@@ -4,6 +4,8 @@ from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from django.core.cache import cache
+from django.db.models import Max, Count
 from .models import YouTubeComment, Plan, UserPlan
 import json
 import pandas as pd
@@ -257,8 +259,6 @@ def index(request):
     # ページ番号を取得（デフォルト: 1ページ目）
     page_number = request.GET.get('page', 1)
     
-    # グラフ用には最大300件を使用
-    comments_for_graph = YouTubeComment.objects.all()[:300]
     # テーブル表示用には全件を取得してページネーション
     all_comments = YouTubeComment.objects.all().order_by('-created_at')
     
@@ -267,112 +267,137 @@ def index(request):
     page_obj = paginator.get_page(page_number)
     comments = page_obj.object_list
 
-    # 3Dグラフ用のデータを準備
-    graph_data = None
-    stats = None
-
-    if comments_for_graph.exists():
-        df = pd.DataFrame(list(comments_for_graph.values(
+    # キャッシュキー生成用：データが更新されたかどうかを判定
+    # コメント数と最新更新時刻を取得
+    comment_count = YouTubeComment.objects.count()
+    latest_update = YouTubeComment.objects.aggregate(Max('created_at'))['created_at__max']
+    cache_key_base = f"index_data_{comment_count}_{latest_update}"
+    
+    # キャッシュからデータを取得
+    graph_data = cache.get(f"{cache_key_base}_graph")
+    stats = cache.get(f"{cache_key_base}_stats")
+    analysis = cache.get(f"{cache_key_base}_analysis")
+    advice = cache.get(f"{cache_key_base}_advice")
+    cluster_data = cache.get(f"{cache_key_base}_cluster")
+    
+    # キャッシュにない場合は計算
+    if graph_data is None or stats is None:
+        # グラフ用には最大300件を使用
+        comments_for_graph = YouTubeComment.objects.all()[:300]
+        
+        if comments_for_graph.exists():
+            df = pd.DataFrame(list(comments_for_graph.values(
             "like_count",
             "reply_count",
             "created_at",
-            "author",
-            "comment_text",
-        )))
+                "author",
+                "comment_text",
+            )))
 
-        # タイムスタンプを数値に変換
-        df["created_at_num"] = df["created_at"].astype("int64") // 10**9
-        
-        # グラフ用のデータをリスト形式に変換
-        graph_data = {
-            "x": df["like_count"].tolist(),
-            "y": df["reply_count"].tolist(),
-            "z": df["created_at_num"].tolist(),
-            "text": [
-                f"Author: {author}<br>Likes: {likes}<br>Replies: {replies}<br>Comment: {text[:50]}..."
-                for author, likes, replies, text in zip(
-                    df["author"], df["like_count"], df["reply_count"], df["comment_text"]
-                )
-            ],
-            "colors": df["created_at_num"].tolist(),  # 色分け用
-        }
+            # タイムスタンプを数値に変換
+            df["created_at_num"] = df["created_at"].astype("int64") // 10**9
+            
+            # グラフ用のデータをリスト形式に変換
+            graph_data = {
+                "x": df["like_count"].tolist(),
+                "y": df["reply_count"].tolist(),
+                "z": df["created_at_num"].tolist(),
+                "text": [
+                    f"Author: {author}<br>Likes: {likes}<br>Replies: {replies}<br>Comment: {text[:50]}..."
+                    for author, likes, replies, text in zip(
+                        df["author"], df["like_count"], df["reply_count"], df["comment_text"]
+                    )
+                ],
+                "colors": df["created_at_num"].tolist(),  # 色分け用
+            }
 
-        # 統計情報を計算
-        stats = {
-            "total_comments": len(df),
-            "avg_likes": float(df["like_count"].mean()),
-            "avg_replies": float(df["reply_count"].mean()),
-            "max_likes": int(df["like_count"].max()),
-            "max_replies": int(df["reply_count"].max()),
-            "total_likes": int(df["like_count"].sum()),
-            "total_replies": int(df["reply_count"].sum()),
-        }
-        
-        # 分析結果とアドバイスを生成（有料プラン・無料プラン両方で生成）
-        analysis = None
-        advice = None
-        
-        # 有料プランチェック
-        is_premium = False
-        if request.user.is_authenticated:
-            try:
-                user_plan = UserPlan.objects.get(user=request.user, is_active=True)
-                is_premium = user_plan.is_premium
-            except UserPlan.DoesNotExist:
-                pass
-        
-        if len(df) > 0:
-            # 分析結果を生成
-            high_engagement = df[(df["like_count"] > stats["avg_likes"]) & (df["reply_count"] > stats["avg_replies"])]
-            low_engagement = df[(df["like_count"] < stats["avg_likes"]) & (df["reply_count"] < stats["avg_replies"])]
-            
-            engagement_ratio = len(high_engagement) / len(df) * 100 if len(df) > 0 else 0
-            
-            analysis = {
-                "high_engagement_count": len(high_engagement),
-                "low_engagement_count": len(low_engagement),
-                "engagement_ratio": round(engagement_ratio, 1),
-                "top_comment_likes": int(df.nlargest(1, "like_count")["like_count"].iloc[0]) if len(df) > 0 else 0,
-                "top_comment_replies": int(df.nlargest(1, "reply_count")["reply_count"].iloc[0]) if len(df) > 0 else 0,
+            # 統計情報を計算
+            stats = {
+                "total_comments": len(df),
+                "avg_likes": float(df["like_count"].mean()),
+                "avg_replies": float(df["reply_count"].mean()),
+                "max_likes": int(df["like_count"].max()),
+                "max_replies": int(df["reply_count"].max()),
+                "total_likes": int(df["like_count"].sum()),
+                "total_replies": int(df["reply_count"].sum()),
             }
             
-            # アドバイスを生成
-            advice_items = []
+            # 分析結果とアドバイスを生成（有料プラン・無料プラン両方で生成）
+            if analysis is None:
+                analysis = None
+                advice = None
             
-            if stats["avg_likes"] < 5:
-                advice_items.append("平均いいね数が低い傾向にあります。コメントの内容をより具体的で価値のあるものにすることで、エンゲージメントを向上させることができます。")
+            if len(df) > 0:
+                # 分析結果を生成
+                high_engagement = df[(df["like_count"] > stats["avg_likes"]) & (df["reply_count"] > stats["avg_replies"])]
+                low_engagement = df[(df["like_count"] < stats["avg_likes"]) & (df["reply_count"] < stats["avg_replies"])]
+                
+                engagement_ratio = len(high_engagement) / len(df) * 100 if len(df) > 0 else 0
+                
+                analysis = {
+                    "high_engagement_count": len(high_engagement),
+                    "low_engagement_count": len(low_engagement),
+                    "engagement_ratio": round(engagement_ratio, 1),
+                    "top_comment_likes": int(df.nlargest(1, "like_count")["like_count"].iloc[0]) if len(df) > 0 else 0,
+                    "top_comment_replies": int(df.nlargest(1, "reply_count")["reply_count"].iloc[0]) if len(df) > 0 else 0,
+                }
+                
+                # アドバイスを生成
+                advice_items = []
+                
+                if stats["avg_likes"] < 5:
+                    advice_items.append("平均いいね数が低い傾向にあります。コメントの内容をより具体的で価値のあるものにすることで、エンゲージメントを向上させることができます。")
+                
+                if stats["avg_replies"] < 2:
+                    advice_items.append("返信数が少ない傾向にあります。質問形式のコメントや議論を促す内容を増やすことで、コミュニティの活性化につながります。")
+                
+                if engagement_ratio < 20:
+                    advice_items.append("高エンゲージメントコメントの割合が低いです。視聴者の興味を引く話題や、タイムリーな内容を意識することで改善できます。")
+                
+                if len(high_engagement) > 0:
+                    top_comment = df.nlargest(1, "like_count").iloc[0]
+                    advice_items.append(f"最もエンゲージメントが高いコメントは{int(top_comment['like_count'])}いいね、{int(top_comment['reply_count'])}返信を獲得しています。このようなコメントの特徴を分析し、同様のアプローチを他のコメントにも適用することをお勧めします。")
+                
+                if stats["max_likes"] > stats["avg_likes"] * 3:
+                    advice_items.append("一部のコメントが非常に高いエンゲージメントを獲得しています。これらの成功パターンを分析し、コンテンツ戦略に反映させることで、全体的なエンゲージメント向上が期待できます。")
+                
+                if not advice_items:
+                    advice_items.append("現在のエンゲージメント状況は良好です。継続的な分析と改善により、さらなる成長が期待できます。")
+                
+                advice = advice_items
             
-            if stats["avg_replies"] < 2:
-                advice_items.append("返信数が少ない傾向にあります。質問形式のコメントや議論を促す内容を増やすことで、コミュニティの活性化につながります。")
-            
-            if engagement_ratio < 20:
-                advice_items.append("高エンゲージメントコメントの割合が低いです。視聴者の興味を引く話題や、タイムリーな内容を意識することで改善できます。")
-            
-            if len(high_engagement) > 0:
-                top_comment = df.nlargest(1, "like_count").iloc[0]
-                advice_items.append(f"最もエンゲージメントが高いコメントは{int(top_comment['like_count'])}いいね、{int(top_comment['reply_count'])}返信を獲得しています。このようなコメントの特徴を分析し、同様のアプローチを他のコメントにも適用することをお勧めします。")
-            
-            if stats["max_likes"] > stats["avg_likes"] * 3:
-                advice_items.append("一部のコメントが非常に高いエンゲージメントを獲得しています。これらの成功パターンを分析し、コンテンツ戦略に反映させることで、全体的なエンゲージメント向上が期待できます。")
-            
-            if not advice_items:
-                advice_items.append("現在のエンゲージメント状況は良好です。継続的な分析と改善により、さらなる成長が期待できます。")
-            
-            advice = advice_items
-        
-        # 3Dクラスタリング処理
-        cluster_data = None
-        if len(df) > 0:
-            try:
-                cluster_data = perform_clustering(df, n_clusters=6)
-            except Exception as e:
-                import traceback
-                print(f"Clustering failed: {e}")
-                print(traceback.format_exc())
+            # 3Dクラスタリング処理
+            if cluster_data is None:
                 cluster_data = None
-    else:
-        # comments_for_graphが存在しない場合の初期化
-        cluster_data = None
+                if len(df) > 0:
+                    try:
+                        cluster_data = perform_clustering(df, n_clusters=6)
+                    except Exception as e:
+                        import traceback
+                        print(f"Clustering failed: {e}")
+                        print(traceback.format_exc())
+                        cluster_data = None
+            
+            # キャッシュに保存（5分間有効）
+            cache.set(f"{cache_key_base}_graph", graph_data, 300)
+            cache.set(f"{cache_key_base}_stats", stats, 300)
+            cache.set(f"{cache_key_base}_analysis", analysis, 300)
+            cache.set(f"{cache_key_base}_advice", advice, 300)
+            if cluster_data:
+                cache.set(f"{cache_key_base}_cluster", cluster_data, 300)
+        else:
+            # comments_for_graphが存在しない場合の初期化
+            if cluster_data is None:
+                cluster_data = None
+    
+    # 有料プランチェック（ユーザーごとに異なるためキャッシュしない）
+    is_premium = False
+    if request.user.is_authenticated:
+        try:
+            user_plan = UserPlan.objects.get(user=request.user, is_active=True)
+            is_premium = user_plan.is_premium
+        except UserPlan.DoesNotExist:
+            pass
 
     return render(request, "index.html", {
         "graph_data": json.dumps(graph_data) if graph_data else None,

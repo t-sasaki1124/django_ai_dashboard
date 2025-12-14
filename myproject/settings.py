@@ -24,10 +24,12 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',  # キャッシュミドルウェア（上）
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',  # キャッシュミドルウェア（下）
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -59,7 +61,7 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 #     }
 # }
 
-# PostgreSQLでの接続をするための情報
+# ローカルのPostgreSQLでの接続をするための情報
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -71,7 +73,39 @@ DATABASES = {
     }
 }
 
+# AWS RDS (PostgreSQL) を参照するための設定例
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.environ.get("RDS_DB_NAME", "comment_dashboard"),
+#         "USER": os.environ.get("RDS_USERNAME", "admin"),
+#         "PASSWORD": os.environ.get("RDS_PASSWORD", "your_rds_password"),
+#         "HOST": os.environ.get("RDS_HOSTNAME", "your-rds-instance.xxxxxx.ap-northeast-1.rds.amazonaws.com"),
+#         "PORT": os.environ.get("RDS_PORT", "5432"),
+#         "OPTIONS": {
+#             "connect_timeout": 10,
+#             "options": "-c statement_timeout=30000"
+#         },
+#     }
+# }
+
+
+
 STATIC_URL = '/static/'
+
+# ============================================
+# キャッシュ設定
+# ============================================
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,  # 5分間キャッシュ
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
+    }
+}
 STATICFILES_DIRS = [BASE_DIR / 'myapp' / 'static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
