@@ -259,11 +259,167 @@ git push origin main
 
 ---
 
+## 🔐 13. ユーザーポータル機能
+
+このプロジェクトには、**管理者用管理画面（Django Admin）**と**ユーザー用ポータル**の2つの管理画面が実装されています。
+
+### 管理者用管理画面（Django Admin）
+
+- **URL**: `/admin/`
+- **アクセス制御**: `is_staff=True` のユーザーのみ
+- **機能**: すべてのコメントを閲覧・編集・削除可能
+
+### ユーザー用ポータル
+
+- **URL**: `/portal/`
+- **ログインURL**: `/portal/login/`
+- **ログアウトURL**: `/portal/logout/`
+- **アクセス制御**: ログイン必須（staffユーザーもアクセス可能）
+- **機能**: ログインユーザーが所有するコメントのみを閲覧・編集・削除可能
+
+#### ポータルの主な機能
+
+1. **ダッシュボード** (`/portal/`)
+   - コメント数の統計表示
+   - 最近のコメント一覧
+
+2. **コメント一覧** (`/portal/comments/`)
+   - 自分のコメント一覧表示
+   - 検索機能（コメント内容、投稿者、動画IDで検索）
+   - ページネーション
+
+3. **コメント詳細** (`/portal/comments/<id>/`)
+   - コメントの詳細情報を表示
+
+4. **コメント作成** (`/portal/comments/new/`)
+   - 新しいコメントを作成（自動的に現在のユーザーがownerに設定）
+
+5. **コメント編集** (`/portal/comments/<id>/edit/`)
+   - 自分のコメントのみ編集可能（他人のコメントは404エラー）
+
+6. **コメント削除** (`/portal/comments/<id>/delete/`)
+   - 自分のコメントのみ削除可能（他人のコメントは404エラー）
+
+#### セキュリティ機能
+
+- **データ分離**: 各ユーザーは自分のコメントのみアクセス可能
+- **所有者チェック**: 直接URLを入力しても他人のデータにはアクセスできない（404エラー）
+- **CSRF保護**: すべてのフォームでCSRFトークン必須
+- **認証必須**: 未ログインユーザーは自動的にログインページにリダイレクト
+
+#### ポータルの使い方
+
+1. **ユーザー作成**（管理者がDjango Adminで作成、または`createsuperuser`で作成）
+2. **ポータルにアクセス**: `http://127.0.0.1:8000/portal/`
+3. **ログイン**: 作成したユーザーでログイン
+4. **コメント作成**: 「新規作成」ボタンからコメントを作成
+5. **コメント管理**: 一覧・詳細・編集・削除が可能
+
+#### 既存データの移行について
+
+既存の`YouTubeComment`データに`owner`フィールドが追加されました。既存データの`owner`は`null`のままです。
+
+- **ポータル側**: `owner`が`null`のコメントは表示されません（ユーザーは自分のコメントのみ表示）
+- **管理者側**: `owner`が`null`のコメントも含めてすべてのコメントを表示・管理可能
+
+既存データに`owner`を設定したい場合は、Django Adminから手動で設定するか、データ移行スクリプトを実行してください。
+
+---
+
 ## 🧠 補足メモ
 
 - 現状はSQLiteを使用（`db.sqlite3`）  
 - 今後PostgreSQLやAI分析機能に拡張可能  
 - 静的ファイル (`/static`) にCSS・グラフ画像を配置可能  
+- **ユーザーポータル機能**: ユーザーが自分のデータのみ操作できる管理画面を提供
+
+---
+
+## 📋 14. 実装ファイル一覧
+
+### 新規作成されたファイル
+
+#### portalアプリ
+- `portal/__init__.py`
+- `portal/admin.py`
+- `portal/apps.py`
+- `portal/models.py`
+- `portal/tests.py`
+- `portal/views.py`
+- `portal/urls.py`
+- `portal/forms.py` - コメント用フォーム
+- `portal/mixins.py` - 認証・認可用Mixin
+- `portal/templates/portal/base.html` - ベーステンプレート
+- `portal/templates/portal/login.html` - ログインテンプレート
+- `portal/templates/portal/dashboard.html` - ダッシュボード
+- `portal/templates/portal/comment_list.html` - コメント一覧
+- `portal/templates/portal/comment_detail.html` - コメント詳細
+- `portal/templates/portal/comment_form.html` - コメント作成・編集フォーム
+- `portal/templates/portal/comment_confirm_delete.html` - 削除確認
+
+### 変更されたファイル
+
+- `myapp/models.py` - `YouTubeComment`モデルに`owner`フィールドを追加
+- `myapp/admin.py` - `YouTubeCommentAdmin`に`owner`フィールドを追加
+- `myproject/settings.py` - `portal`アプリを追加、認証設定を追加
+- `myproject/urls.py` - `/portal/`のURLルーティングを追加
+
+### マイグレーションファイル
+
+- `myapp/migrations/0007_youtubecomment_owner_alter_plan_stripe_price_id.py` - `owner`フィールド追加のマイグレーション
+
+---
+
+## 🔗 15. URL一覧
+
+### 管理者用（Django Admin）
+- `/admin/` - 管理画面トップ
+- `/admin/myapp/youtubecomment/` - コメント一覧（管理者用）
+
+### ユーザー用ポータル
+- `/portal/` - ダッシュボード
+- `/portal/login/` - ログイン
+- `/portal/logout/` - ログアウト
+- `/portal/comments/` - コメント一覧
+- `/portal/comments/new/` - コメント作成
+- `/portal/comments/<id>/` - コメント詳細
+- `/portal/comments/<id>/edit/` - コメント編集
+- `/portal/comments/<id>/delete/` - コメント削除
+
+---
+
+## 🚀 16. 動作確認手順
+
+### 1. マイグレーション実行
+```bash
+python manage.py migrate
+```
+
+### 2. サーバー起動
+```bash
+python manage.py runserver
+```
+
+### 3. 管理者用管理画面の確認
+1. `http://127.0.0.1:8000/admin/` にアクセス
+2. 管理者アカウントでログイン
+3. 「YouTube Comments」を確認（`owner`フィールドが追加されていることを確認）
+
+### 4. ユーザー用ポータルの確認
+1. `http://127.0.0.1:8000/portal/` にアクセス
+2. ログインページにリダイレクトされることを確認
+3. ユーザーアカウントでログイン（管理者アカウントでも可）
+4. ダッシュボードが表示されることを確認
+5. 「新規作成」からコメントを作成
+6. 作成したコメントが一覧に表示されることを確認
+7. コメントの詳細・編集・削除が正常に動作することを確認
+
+### 5. セキュリティ確認
+1. ユーザーAでログインしてコメントを作成
+2. ログアウト
+3. ユーザーBでログイン
+4. ユーザーAのコメントのURL（`/portal/comments/<id>/`）に直接アクセス
+5. 404エラーが表示されることを確認（他人のデータにアクセスできない）
 
 ---
 

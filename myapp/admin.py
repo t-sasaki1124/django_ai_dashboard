@@ -113,8 +113,21 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(YouTubeComment)
 class YouTubeCommentAdmin(admin.ModelAdmin):
-    list_display = ('author', 'like_count', 'reply_count', 'created_at')
-    search_fields = ('author', 'comment_text')
+    list_display = ('id', 'author', 'owner', 'like_count', 'reply_count', 'created_at')
+    list_filter = ('owner', 'created_at')
+    search_fields = ('author', 'comment_text', 'video_id', 'owner__username')
+    readonly_fields = ('id',)
+    fieldsets = (
+        ('基本情報', {
+            'fields': ('video_id', 'comment_id', 'comment_text', 'author')
+        }),
+        ('統計情報', {
+            'fields': ('like_count', 'reply_count', 'reply_depth_potential', 'engagement_score')
+        }),
+        ('その他', {
+            'fields': ('created_at', 'ai_reply', 'embedding', 'owner')
+        }),
+    )
     change_list_template = "admin/myapp/youtubecomment/change_list.html"
 
     def changelist_view(self, request, extra_context=None):

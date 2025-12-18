@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'myapp',  # ← 追加
+    'portal',  # ユーザーポータルアプリ
 ]
 
 MIDDLEWARE = [
@@ -139,3 +140,11 @@ STRIPE_PRO_PRICE_ID = os.environ.get('STRIPE_PRO_PRICE_ID', '')
 # 決済成功後のリダイレクトURL
 STRIPE_SUCCESS_URL = 'http://127.0.0.1:8000/checkout-success/'
 STRIPE_CANCEL_URL = 'http://127.0.0.1:8000/pricing/'
+
+# ============================================
+# 認証設定（ポータル用）
+# ============================================
+# ポータル用のログインURL（未認証ユーザーがアクセスした場合のリダイレクト先）
+LOGIN_URL = '/portal/login/'
+# ログイン成功後のデフォルトリダイレクト先（ポータル用）
+LOGIN_REDIRECT_URL = '/portal/'

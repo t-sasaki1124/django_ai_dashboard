@@ -13,6 +13,8 @@ class YouTubeComment(models.Model):
     engagement_score = models.FloatField(default=0)
     ai_reply = models.TextField(null=True, blank=True)
     embedding = models.TextField(null=True, blank=True)
+    # ポータル用: コメントの所有者（ユーザーが自分のデータのみ操作可能にするため）
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='youtube_comments', null=True, blank=True, verbose_name="所有者")
 
     class Meta:
         ordering = ['-created_at']
