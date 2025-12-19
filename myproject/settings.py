@@ -54,6 +54,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
+# ============================================
+# データベース設定（.envファイルから読み込み）
+# ============================================
 # SQLiteでの接続をするための情報
 # DATABASES = {
 #     'default': {
@@ -62,33 +65,62 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 #     }
 # }
 
-# ローカルのPostgreSQLでの接続をするための情報
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "comment_dashboard",
-        "USER": "comment_user",
-        "PASSWORD": "your_password_here",
-        "HOST": "localhost",
-        "PORT": "5432",
-    }
-}
+# データベースタイプ（local または rds）
+# .envファイルで DB_TYPE=local または DB_TYPE=rds を設定
+DB_TYPE = os.environ.get("DB_TYPE", "local")
 
-# AWS RDS (PostgreSQL) を参照するための設定例
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.environ.get("RDS_DB_NAME", "comment_dashboard"),
-#         "USER": os.environ.get("RDS_USERNAME", "admin"),
-#         "PASSWORD": os.environ.get("RDS_PASSWORD", "your_rds_password"),
-#         "HOST": os.environ.get("RDS_HOSTNAME", "your-rds-instance.xxxxxx.ap-northeast-1.rds.amazonaws.com"),
-#         "PORT": os.environ.get("RDS_PORT", "5432"),
-#         "OPTIONS": {
-#             "connect_timeout": 10,
-#             "options": "-c statement_timeout=30000"
-#         },
-#     }
-# }
+# デバッグ: 使用するデータベースタイプを表示（本番環境では削除推奨）
+if DEBUG:
+    print(f"[DEBUG] DB_TYPE: {DB_TYPE}")
+
+if DB_TYPE == "rds":
+    # AWS RDS (PostgreSQL) での接続（.envファイルから読み込み）
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("RDS_DB_NAME"),
+            "USER": os.environ.get("RDS_USERNAME"),
+            "PASSWORD": os.environ.get("RDS_PASSWORD"),
+            "HOST": os.environ.get("RDS_HOSTNAME"),
+            "PORT": os.environ.get("RDS_PORT", "5432"),
+            "OPTIONS": {
+                "connect_timeout": int(os.environ.get("RDS_CONNECT_TIMEOUT", "10")),
+            }
+        }
+    }
+    # statement_timeoutが設定されている場合のみ追加
+    if os.environ.get("RDS_STATEMENT_TIMEOUT"):
+        DATABASES["default"]["OPTIONS"]["options"] = f"-c statement_timeout={os.environ.get('RDS_STATEMENT_TIMEOUT')}"
+    
+    # 必須環境変数のチェック（RDS用）
+    required_env_vars = ["RDS_DB_NAME", "RDS_USERNAME", "RDS_PASSWORD", "RDS_HOSTNAME"]
+    missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
+    if missing_vars:
+        raise ValueError(
+            f"以下の環境変数が設定されていません: {', '.join(missing_vars)}\n"
+            f".envファイルを作成して、これらの値を設定してください。"
+        )
+else:
+    # ローカルのPostgreSQLでの接続（.envファイルから読み込み）
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME"),
+            "USER": os.environ.get("DB_USER"),
+            "PASSWORD": os.environ.get("DB_PASSWORD"),
+            "HOST": os.environ.get("DB_HOST", "localhost"),
+            "PORT": os.environ.get("DB_PORT", "5432"),
+        }
+    }
+    
+    # 必須環境変数のチェック（ローカル用）
+    required_env_vars = ["DB_NAME", "DB_USER", "DB_PASSWORD"]
+    missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
+    if missing_vars:
+        raise ValueError(
+            f"以下の環境変数が設定されていません: {', '.join(missing_vars)}\n"
+            f".envファイルを作成して、これらの値を設定してください。"
+        )
 
 
 
